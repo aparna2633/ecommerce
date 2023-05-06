@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Order Management</h3>
+<br><br>
+<div class="container-fluid cont">
+    <h6>Manage Orders</h6>
+</div>
+<div class="search-container">
+    <form action="">
+    <input type="text" placeholder="Search.." name="search">
+    <button name="bt1" type="submit"><i class="fas fa-search" style=" margin-right:20px;"><svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!-- Font Awesome Pro 5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) --><path d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"/></svg></i></button>
+    </form>
+</div>
+<br><br>
+<div>
+{% if order %}
+<table class="table table-bordered table-dark">
+    <thead>
+    <tr>
+        <th scope="col">id</th>
+        <th scope="col">user</th>
+        <th scope="col">products</th>
+        <th scope="col">total price</th>
+        <th scope="col">payment method</th>
+        <th scope="col">status</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for od in order %}
+        <tr>
+            <th scope="row">{{forloop.counter}}</th>
+            <td>{{od.user}}</td>
+            <td>{% for item in od.items.all %}{{item.product.name}} ({{item.quantity}}) {% if forloop.last %}<br/>
+                {% endif %}{% endfor %}</td>
+            <td>{{od.total_price}}</td>
+            {% if od.payment_method == 'RAZORPAY' %}
+            <td>RAZORPAY</td>
+            {% else %}
+            <td>COD</td>
+            {% endif %}
+            <td>
+                {% if od.delivery_status == 'Pending' %}
+                <a class="btn btn-success" href="{% url 'delivery_status' od.id %}" onclick="return confirm('Do you sure you want to change the delivery status?')">Pending</a>
+
+                {% elif od.delivery_status == 'Confirmed' %}
+                <a class="btn btn-success" href="{% url 'delivery_status' od.id %}" onclick="return confirm('Do you sure you want to change the delivery status?')">Confirmed</a>
+        
+                {% elif od.delivery_status == 'Shipped' %}
+                <a class="btn btn-success" href="{% url 'delivery_status' od.id %}" onclick="return confirm('Do you sure you want to change the delivery status?')">Shipped</a>
+    
+                {% elif od.delivery_status == 'Out for delivery' %}
+                <a class="btn btn-success" href="{% url 'delivery_status' od.id %}" onclick="return confirm('Do you sure you want to change the delivery status?')">Out for delivery</a>
+                    
+                {% elif od.delivery_status == 'Delivered' %}
+                    <p class="btn btn-success">Delivered</p>
+                {% elif od.delivery_status == 'Returned' %}
+                    <p class="btn btn-success">Returned</p>
+                {% elif od.delivery_status == 'Cancelled' %}
+                    <p class="btn btn-success">Cancelled</p>
+                {% endif %}
+            </td>
+            </tr>
+            {% endfor %}
+            {% if order %}    
+{% endif %}
+    </tbody>
+</table>
+{% else %}
+<h4 class='text-center alert alert-warning'>No records found </h4>
+{% endif %}
+</div>
+{% if order %}
+    <!-- table code goes here -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if order.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ order.previous_page_number }}">&lsaquo; previous</a>
+            {% endif %}
+
+            <span class="current-page">
+                Page {{ order.number }} of {{ order.paginator.num_pages }}
+            </span>
+
+            {% if order.has_next %}
+                <a href="?page={{ order.next_page_number }}">next &rsaquo;</a>
+                <a href="?page={{ order.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% endif %}
+
+<br><br>
+{% endblock %}

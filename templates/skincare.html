@@ -1,0 +1,170 @@
+{%extends 'base1.html' %}
+{%load static%}
+{%block content%}
+    </header>
+    <div class="breadcumb_area bg-img" style="background-image: url(img/bg-img/breadcumb.jpg);">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <div class="page-title text-center">
+                        <h2>Products</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ##### Breadcumb Area End ##### -->
+
+    <!-- ##### Shop Grid Area Start ##### -->
+    <section class="shop_grid_area section-padding-80">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <div class="shop_sidebar_area">
+                        
+
+                        <!-- ##### Single Widget ##### -->
+                        <div class="widget catagory mb-50">
+                            <!-- Widget Title -->
+                            <h6 class="widget-title mb-30"></h6>
+
+                            <!--  Catagories  -->
+                            <div class="widget brands mb-50">
+                                <!-- Widget Title 2 -->
+                                <p class="widget-title2 mb-30">Categories</p>
+                                <div class="widget-desc">
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ##### Single Widget ##### -->
+                        
+
+                        <!-- ##### Single Widget ##### -->
+                        
+
+                        <!-- ##### Single Widget ##### -->
+                        <div class="widget brands mb-50">
+                            <!-- Widget Title 2 -->
+                            <p class="widget-title2 mb-30"></p>
+                            <!-- <div class="widget-desc">
+                                {% for cate in category %}
+                                <li class=""><a class="">{{cate.name}}<b class="caret"></b></a>
+                                    
+                                     
+                                </li>
+                                {%endfor%} -->
+                                <!-- <ul>
+                                    
+                                    {% for cate in sub %}
+                                    <li><a href="">{{cate.name}}</a></li>
+                                    {% endfor %}
+                                </ul> -->
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-8 col-lg-9">
+                    <div class="shop_grid_product_area">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="product-topbar d-flex align-items-center justify-content-between">
+                                    <!-- Total Products -->
+                                    <div class="total-products">
+                                        <p><span></span> products found</p>
+                                    </div>
+                                    <!-- Sorting -->
+                                    <div class="product-sorting d-flex">
+                                        <p>Sort by:</p>
+                                        <form action="{% url 'product_view_sorting' %}" method="GET">
+                                            {% csrf_token %}
+                                            <select name="select" id="sortByselect" onchange="this.form.submit()">
+                                                <option value="" {% if not request.GET.select %}selected{%endif%}>sort products</option>
+                                                <option value="price_asc" {% if request.GET.select == 'price_asc' %}selected{%endif%}>low to high</option>
+                                                <option value="price_desc" {% if request.GET.select == 'price_desc' %}selected{%endif%}>high to low</option>
+                                            </select>
+                                            <input type="submit" class="d-none" value="">
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            {% for product in products %}
+                            <!-- Single Product -->
+                            <div class="col-12 col-sm-6 col-lg-4">
+                                <div class="single-product-wrapper">
+                                    <!-- Product Image -->
+                                    <div class="product-img">
+                                        <img src="/media/{{product.image1}}" alt="product_image1">
+                                        <!-- Hover Thumb -->
+                                        <a href="{% url 'product_detail' product.id %}"><img class="hover-img" src="/media/{{product.image2}}" alt="product_image2"></a>
+                
+                                        <!-- Product Badge -->
+                                        {%if product.offer %}
+                                        <div class="product-badge offer-badge">
+                                            <span>-{{product.offer}}%</span>
+                                        </div>
+                                        {% endif %}
+                                        <!-- Favourite -->
+                                        
+                                    </div>
+                        
+                                    <!-- Product Description -->
+                                    <div class="product-description">
+                                        <span>{{product.brand}}</span>
+                                        <a href="single-product-details.html">
+                                            <h6>{{product.name}}</h6>
+                                        </a>
+                                        <p class="product-price">{{product.price}}</p>
+                                        <a href="{%url 'add_to_wishlist' product.id %}">Add to wishlist</a>
+                        
+                                        <!-- Hover Content -->
+                                        <div class="hover-content">
+                                            <!-- Add to Cart -->
+                                            <div class="add-to-cart-btn">
+                                                <a href="{%url 'add_to_cart' product.id %}" class="btn essence-btn">Add to Cart</a>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {%endfor%}
+                        
+                        <!-- <nav aria-label="navigation">
+                            <ul class="pagination mt-50 mb-70">
+                                <li class="page-item"><a class="page-link" href="#"><i class="fa fa-angle-left"></i></a></li>
+                                <li class="page-item"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item"><a class="page-link" href="#">...</a></li>
+                                <li class="page-item"><a class="page-link" href="#">21</a></li>
+                                <li class="page-item"><a class="page-link" href="#"><i class="fa fa-angle-right"></i></a></li>
+                            </ul>
+                        </nav> -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- ##### Shop Grid Area End ##### -->
+        
+        <!-- <script>
+            function addToCart(productId) {
+                fetch('{/add_to_cart_ajax/}' + productId + '/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Item added to cart!");
+                        } else {
+                            alert("Error adding item to cart.");
+                        }
+                    });
+            }
+        </script> -->
+
+{%endblock%}

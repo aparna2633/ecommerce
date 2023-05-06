@@ -1,0 +1,45 @@
+{%extends 'base1.html'%}
+{%load static%}
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="images p-3">
+                            <div class="text-center p-4"> <img id="main-image" src="/media/{{product.image1}}"  width="250" /> </div>
+                            <div class="thumbnail text-center"> <img onclick="change_image(this)" src="/media/{{product.image1}}" width="70"><img onclick="change_image(this)" src="/media/{{product.image2}}" alt="product_image" width="70"> <img onclick="change_image(this)" src="/media/{{product.image3}}" width="70"> <img onclick="change_image(this)" src="/media/{{product.image4}}" width="70"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="product p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center"> <i class=""></i> <span class="ml-1"></span> </div> <i class=" text-muted"></i><br><br><br><br>
+                            </div>
+                            
+                                <h5 class="text-uppercase">{{product.name}}</h5>
+                                <div class="mt-4 mb-3"> <span class="act-price">Price {{product.price}}</span>
+                                <div class="price d-flex flex-row align-items-center"> <span class="text-uppercase text-muted brand">{{product.brand}}</span>
+                                    </div>
+                                    <p class="about">{{product.description}}</p>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="cart mt-4 align-items-center"> <button class="btn btn-danger text-uppercase mr-2 px-4">Add to cart</button> <i class="fa fa-heart text-muted"></i>  </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function change_image(element) {
+        var mainImage = document.getElementById("main-image");
+        var newImageSource = element.src;
+        mainImage.src = newImageSource;
+    }
+    </script>
+{%endblock%}

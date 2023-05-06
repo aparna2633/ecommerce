@@ -1,0 +1,409 @@
+{%extends 'base1.html' %}
+{%load static%}
+{%block content%}
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    .float-right {
+   float:right;
+}
+</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+
+    <!-- ##### Right Side Cart End ##### -->
+
+    <!-- ##### Breadcumb Area Start ##### -->
+    <h1>Checkout</h1>
+    <div class="breadcumb_area bg-img" style="background-image: url(img/bg-img/breadcumb.jpg);">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <div class="page-title text-center">
+                        <h2>Checkout</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ##### Breadcumb Area End ##### -->
+
+    <!-- ##### Checkout Area Start ##### -->
+    <form id="form_1" method="POST" action="{% url 'place_order' %}">
+        {% csrf_token %}
+    <div class="checkout_area section-padding-80">
+        
+        <div class="container">
+            <div class="row">
+<!-- add address   -->
+
+             <div class="col-12 col-md-6">
+                <div class="card" style="width: 30rem;">
+                    <div class="card-header">
+                        Delivery address
+                      </div>
+                    {% for item in add %}
+                    <div class="card-body">
+                        
+                      
+                      <h6 class="card-title">{{item.address1}}</h6>
+                      <h6 class="card-title">{{item.city}}</h6>
+                      <h6 class="card-title">{{item.country}}</h6>
+                      <h6 class="card-title">{{item.postcode}}</h6>
+                      <h6 class="card-title">{{item.phone}}</h6>
+
+                      <p class="card-text">select address</p>
+                      <div class="form-check">
+                        <input required class="form-check-input" onclick="fun1('{{item.id}}')" type="radio"  value="{{item.id}}" name="address" checked>
+                        
+                      </div>
+                    </form>
+                    
+                     
+                      
+                    </div>
+                    {% endfor %}
+                  </div>
+                    <div class="checkout_details_area mt-50 clearfix">
+
+                        <div class="cart-page-heading mb-30">
+                            <h5>Billing Address</h5>
+                        </div>
+
+                        <form action="{% url 'save_details' %}" onsubmit="return validatePhoneNumber()" method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="street_address">Address<span>*</span></label>
+                                    <input type="text" class="form-control mb-3"  value="" name="address1">
+                                   
+                                </div>  
+                                <div class="col-12 mb-3">
+                                    <label for="city">City <span>*</span></label>
+                                    <input type="text" class="form-control" id="city" value="" name="city">
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="postcode">Country<span>*</span></label>
+                                    <input type="text" class="form-control" id="country" value="" name="country">
+                                </div>                             
+                                
+                                <div class="col-12 mb-3">
+                                    <label for="postcode">Postcode <span>*</span></label>
+                                    <input type="text" class="form-control" id="postcode" value="" name="postcode">
+                                </div> 
+
+                                <div class="col-12 mb-3">
+                                    <label for="phone">Phone no<span>*</span></label>
+                                    <input type="tel" class="form-control" id="phone" min="0" value="" name="phone" required>
+                                </div>
+                                <div>
+                                    <button name="saveaddress">save address</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- end add address -->
+                
+                <div class="col-12 col-md-6 col-lg-5 ml-lg-auto">
+                    
+                    <div class="order-details-confirmation">
+
+                        <div class="cart-page-heading">
+                            <h5>Your Order</h5>
+                            <p>The Details</p>
+                        </div>
+
+                        <ul class="order-details-form mb-4">
+                            
+                            <li>image <span>name</span> <span>quantity</span></li>
+                            {% for item in cart_items %}
+                            
+                            <li><img src="{{item.product.image1.url}}" height="100px" width="100px" alt=""><span>{{item.product.name}}</span> <span>{{item.quantity}}</span></li>
+                            
+                            
+                            {% endfor %}
+                            <li>
+                                
+                                <form id="coupon-apply-form" method="post">
+                                    {% csrf_token %}
+                                    <div class="input-group w-auto">
+                                        <input type="text" value="{{code}}" name="coupon_code" class="form-control custom-input"
+                                            id="coupon-code" placeholder="Apply Coupon" aria-label="Example input"
+                                            aria-describedby="button-addon1" name="coupon_code">
+                                        <button class="btn btn-primary" type="submit" id="button-addon1" data-mdb-ripple-color="dark">
+                                            Apply
+                                        </button>
+                                    </div>
+                                </form>
+                               
+                                    
+
+                            </li>
+                            <div id="total-price-element-id">
+                            <li><span>Total</span> <span><span>&#8377;</span>{{total}}</span></li>
+                            
+                            <li><span>Discount</span><span>
+                                -<span>&#8377;</span>{{discount}}</span></li>
+                           
+                            <li><span>Grand Total</span> <span><span>&#8377;</span>{{total_price|stringformat:'d'}}</span></li>
+                            <input type="hidden" name="total_price" value="{{total_price}}" hidden>
+                        </div>
+                        </ul>
+
+                        <!-- <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="exampleRadios1" value="cod" >
+                            <label class="form-check-label" for="exampleRadios1">
+                              COD
+                            </label>
+                          </div>
+                          <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="exampleRadios2" value="RAZORPAY">
+                            <label class="form-check-label" for="exampleRadios2">
+                              RAZOR PAY
+                            </label>
+                          </div>
+                           -->
+
+                        <!-- <button id="" name="" type="button"  class="btn essence-btn">COD</button> -->
+                        <!-- <a name="payment_choice" value="cod" href="{% url 'place_order' %}" class="btn essence-btn" >COD | Place Order</a> -->
+                        <button name="payment_method" type="button" onclick="sumbit_forms()" value="cod" class="btn essence-btn">COD</button>
+                        <input type="radio" name="payment_method" value="cod" checked hidden>
+
+                        <button name="payment_method" id="rzp-button1" type="button" value="RAZORPAY" class="btn essence-btn paywithrazorpay">RAZORPAY</button>
+                        <form id="form3" action="">
+                            {% csrf_token %}
+                            <input id="addressId" name="addressId" type="text" hidden>        
+                        </form>
+                    
+                    </div>
+                
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    <!-- ##### Checkout Area End ##### -->
+
+    <!-- ##### Footer Area Start ##### -->
+    <footer class="footer_area clearfix">
+        <div class="container">
+            <div class="row">
+                <!-- Single Widget Area -->
+                <div class="col-12 col-md-6">
+                    <div class="single_widget_area d-flex mb-30">
+                        <!-- Logo -->
+                        <div class="footer-logo mr-50">
+                            <a href="#"><img src="img/core-img/logo2.png" alt=""></a>
+                        </div>
+                        <!-- Footer Menu -->
+                        <div class="footer_menu">
+                            <ul>
+                                <li><a href="shop.html">Shop</a></li>
+                                <li><a href="blog.html">Blog</a></li>
+                                <li><a href="contact.html">Contact</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Single Widget Area -->
+                <div class="col-12 col-md-6">
+                    <div class="single_widget_area mb-30">
+                        <ul class="footer_widget_menu">
+                            <li><a href="#">Order Status</a></li>
+                            <li><a href="#">Payment Options</a></li>
+                            <li><a href="#">Shipping and Delivery</a></li>
+                            <li><a href="#">Guides</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Terms of Use</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row align-items-end">
+                <!-- Single Widget Area -->
+                <div class="col-12 col-md-6">
+                    <div class="single_widget_area">
+                        <div class="footer_heading mb-30">
+                            <h6>Subscribe</h6>
+                        </div>
+                        <div class="subscribtion_form">
+                            <form action="#" method="post">
+                                <input type="email" name="mail" class="mail" placeholder="Your email here">
+                                <button type="submit" class="submit"><i class="fa fa-long-arrow-right" aria-hidden="true"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Single Widget Area -->
+                <div class="col-12 col-md-6">
+                    <div class="single_widget_area">
+                        <div class="footer_social_area">
+                            <a href="#" data-toggle="tooltip" data-placement="top" title="Facebook"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+                            <a href="#" data-toggle="tooltip" data-placement="top" title="Instagram"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+                            <a href="#" data-toggle="tooltip" data-placement="top" title="Twitter"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+                            <a href="#" data-toggle="tooltip" data-placement="top" title="Pinterest"><i class="fa fa-pinterest" aria-hidden="true"></i></a>
+                            <a href="#" data-toggle="tooltip" data-placement="top" title="Youtube"><i class="fa fa-youtube-play" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+<div class="row mt-5">
+                <div class="col-md-12 text-center">
+                    <p>
+                        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+    Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | Made with <i class="fa fa-heart-o" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>, distributed by <a href="https://themewagon.com/" target="_blank">ThemeWagon</a>
+    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                    </p>
+                </div>
+            </div>
+            
+        </div>
+
+
+    </footer>
+    <!-- ##### Footer Area End ##### -->
+
+    <!-- jQuery (Necessary for All JavaScript Plugins) -->
+    <script src="js/jquery/jquery-2.2.4.min.js"></script>
+    <!-- Popper js -->
+    <script src="js/popper.min.js"></script>
+    <!-- Bootstrap js -->
+    <script src="js/bootstrap.min.js"></script>
+    <!-- Plugins js -->
+    <script src="js/plugins.js"></script>
+    <!-- Classy Nav js -->
+    <script src="js/classy-nav.min.js"></script>
+    <!-- Active js -->
+    <script src="js/active.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+</body>
+
+</html>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    sumbit_forms=function(){
+        document.getElementById("form_1").submit();
+    }
+</script>
+
+
+
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+fun1 = function(id){
+        console.log('hai',id)
+        document.getElementById('addressId').value = id
+        
+    }
+var options = {
+    "key": "rzp_test_S0yLGz7vAs7dYf", // Enter the Key ID generated from the Dashboard
+    "amount": "50000", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+    "currency": "INR",
+    "name": "Acme Corp",
+    "description": "Test Transaction",
+    "image": "https://example.com/your_logo",
+    "order_id": "{{payment_id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+    "callback_url": "{% url 'success' %}",
+    "prefill": {
+        "name": "Gaurav Kumar",
+        "email": "gaurav.kumar@example.com",
+        "contact": "9000090000"
+    },
+    "notes": {
+        "address": "Razorpay Corporate Office"
+    },
+    "theme": {
+        "color": "#3399cc"
+    }
+};
+var rzp1 = new Razorpay(options);
+document.getElementById('rzp-button1').onclick = function(e){
+    const form = document.getElementById('form3')
+    const formData = new FormData(form)
+    
+    fetch("{% url 'set_address' %}", {
+        method: 'post',
+        body:formData
+    }).then(res =>{
+        
+        e.preventDefault();
+        rzp1.open();
+    }).catch(err =>{
+        //handle error
+    })
+    
+}
+</script>
+
+
+
+
+<script>
+
+$(document).ready(function () {
+    $('#button-addon1').on('click', function () {
+        var couponCode = $('#coupon-code-input').val();
+        var total_price = $('#total-price-element-id').text(); // Get the current total price
+        applyCoupon(couponCode, total_price); // Pass the total price to the function
+    });
+
+
+    $('#coupon-apply-form').submit(e => {
+        e.preventDefault();
+        console.log('submitted')
+
+        $.ajax({
+            url: "{% url 'apply_coupon' %}",
+            type: 'POST',
+            data: $('#coupon-apply-form').serialize(),
+            dataType: 'json',
+            beforeSend: function (xhr, settings) {
+                // Include CSRF token in the request headers
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="coupon_code"]').val());
+            },
+        }).done(res => {
+            console.log(res)
+            location.reload()
+            document.getElementById('total_price').innerHTML = res.total_price
+        }).fail(err => {
+
+        })
+    })
+
+});
+
+</script>
+
+<!-- phone number validation -->
+<script>
+    function validatePhoneNumber() {
+      var phoneNumber = document.getElementById("phone").value;
+      var regex = /^\d{10}$/; // Regex for 10 digits
+      
+      if (regex.test(phoneNumber)) {
+        // Valid phone number
+        // alert("Phone number is valid!");
+        return true;
+      } else {
+        // Invalid phone number
+        alert("Please enter a 10-digit phone number!");
+        return false;
+      }
+    }
+  </script>
+
+
+{%endblock%}
