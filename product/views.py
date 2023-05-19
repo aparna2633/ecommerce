@@ -166,8 +166,8 @@ def success(request):
         'razorpay_signature': response['razorpay_signature']
     }
 
-    razorpay_key_id = os.getenv('RAZORPAY_KEY_ID')
-    razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET')
+    razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
+    razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
     
     client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
     try:
@@ -239,8 +239,8 @@ def checkout(request):
 
             total=total_price+discount
             print('discount',discount)
-            razorpay_key_id = os.getenv('RAZORPAY_KEY_ID')
-            razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET')
+            razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
+            razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
             client=razorpay.Client(auth=(razorpay_key_id,razorpay_key_secret))
             payment=client.order.create({'amount':int(total_price)*100,'currency':'INR','payment_capture':0})
             payment_id=payment['id']

@@ -91,9 +91,9 @@ def otp(request):
         phone = request.POST['phone']
         if Account.objects.filter(phone=phone).exists():
             print(phone)
-            account_sid =   os.getenv('ACCOUNT_SID')
-            auth_token = os.getenv('AUTH_TOKEN')
-            service_sid = os.getenv('SERVICE_SID')
+            account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
+            auth_token = os.getenv('AUTH_TOKEN') or 'ac07157bfdeb96601d32b83e1b4eee63'
+            service_sid = os.getenv('SERVICE_SID') or 'VA92e5abb87941f21ce6f390c2fdbf0078'
             print(account_sid,auth_token)
             client = Client(account_sid, auth_token)
 
@@ -116,9 +116,9 @@ def otp_verify(request):
     if request.method == 'POST':
         otp = request.POST['otp']
         print(otp)
-        account_sid =   os.getenv('ACCOUNT_SID')
-        auth_token = os.getenv('AUTH_TOKEN')
-        service_sid = os.getenv('SERVICE_SID')
+        account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
+        auth_token = os.getenv('AUTH_TOKEN') or 'ac07157bfdeb96601d32b83e1b4eee63'
+        service_sid = os.getenv('SERVICE_SID') or 'VA92e5abb87941f21ce6f390c2fdbf0078'
         client = Client(account_sid, auth_token)
         try:
             verification_check = client.verify \
