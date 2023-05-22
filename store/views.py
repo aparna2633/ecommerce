@@ -122,10 +122,10 @@ def otp_verify(request):
         client = Client(account_sid, auth_token)
         try:
             verification_check = client.verify \
-                            .v2 \
-                            .services(service_sid) \
-                            .verification_checks \
-                            .create(to='[+91]'+str(phone), code=otp)
+                           .v2 \
+                           .services(service_sid) \
+                           .verification_checks \
+                           .create(to='[+91]'+str(phone), code=otp)
             if verification_check.status == 'approved':
                 user = Account.objects.get(phone=phone)
                 login(request,user)
