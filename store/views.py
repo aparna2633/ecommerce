@@ -92,16 +92,16 @@ def otp(request):
         if Account.objects.filter(phone=phone).exists():
             print(phone)
             account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
-            auth_token = os.getenv('AUTH_TOKEN') or '14731b8bbd2c0e98b4b394de8162448e'
-            service_sid = os.getenv('SERVICE_SID') or 'VA92e5abb87941f21ce6f390c2fdbf0078'
+            auth_token = os.getenv('AUTH_TOKEN') or '46bd02ba1fd1dd692fb8dc81afbb719a'
+            service_sid = os.getenv('SERVICE_SID') or 'VA5774a25100d8a4e5e1324832da6896aa'
             print(account_sid,auth_token)
             client = Client(account_sid, auth_token)
 
             verification = client.verify \
-                    .v2 \
-                    .services(service_sid) \
-                    .verifications \
-                    .create(to='[+91]'+str(phone), channel='sms')
+                     .v2 \
+                     .services(service_sid) \
+                     .verifications \
+                     .create(to='[+91]'+str(phone), channel='sms')
 
             print(verification)
             if Account.objects.filter(phone=phone).exists():
@@ -117,8 +117,8 @@ def otp_verify(request):
         otp = request.POST['otp']
         print(otp)
         account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
-        auth_token = os.getenv('AUTH_TOKEN') or '14731b8bbd2c0e98b4b394de8162448e'
-        service_sid = os.getenv('SERVICE_SID') or 'VA92e5abb87941f21ce6f390c2fdbf0078'
+        auth_token = os.getenv('AUTH_TOKEN') or '46bd02ba1fd1dd692fb8dc81afbb719a'
+        service_sid = os.getenv('SERVICE_SID') or 'VA5774a25100d8a4e5e1324832da6896aa'
         client = Client(account_sid, auth_token)
         try:
             verification_check = client.verify \
