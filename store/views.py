@@ -92,7 +92,7 @@ def otp(request):
         if Account.objects.filter(phone=phone).exists():
             print(phone)
             account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
-            auth_token = os.getenv('AUTH_TOKEN') or 'ac07157bfdeb96601d32b83e1b4eee63'
+            auth_token = os.getenv('AUTH_TOKEN') or '14731b8bbd2c0e98b4b394de8162448e'
             service_sid = os.getenv('SERVICE_SID') or 'VA92e5abb87941f21ce6f390c2fdbf0078'
             print(account_sid,auth_token)
             client = Client(account_sid, auth_token)
@@ -117,7 +117,7 @@ def otp_verify(request):
         otp = request.POST['otp']
         print(otp)
         account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
-        auth_token = os.getenv('AUTH_TOKEN') or 'ac07157bfdeb96601d32b83e1b4eee63'
+        auth_token = os.getenv('AUTH_TOKEN') or '14731b8bbd2c0e98b4b394de8162448e'
         service_sid = os.getenv('SERVICE_SID') or 'VA92e5abb87941f21ce6f390c2fdbf0078'
         client = Client(account_sid, auth_token)
         try:
