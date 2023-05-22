@@ -85,10 +85,10 @@ def loginacc(request):
 
 
 def otp(request):
-    global phone
 
     if request.method=='POST':
         phone = request.POST['phone']
+        request.session["phone"] = phone
         if Account.objects.filter(phone=phone).exists():
             print(phone)
             account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
@@ -115,7 +115,8 @@ def otp(request):
 def otp_verify(request):
     if request.method == 'POST':
         otp = request.POST['otp']
-        print(otp)
+        phone = request.session.get('phone')
+        print(phone)
         account_sid =   os.getenv('ACCOUNT_SID') or 'ACdafc08625ab5b23aac0feec99142c377'
         auth_token = os.getenv('AUTH_TOKEN') or '46bd02ba1fd1dd692fb8dc81afbb719a'
         service_sid = os.getenv('SERVICE_SID') or 'VA5774a25100d8a4e5e1324832da6896aa'
