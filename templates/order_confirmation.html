@@ -105,11 +105,11 @@ tbody, td, tfoot, th, thead, tr {
         <div>
         <div  class="card">
             
-            {% for itm in order_items %}
+            
           <div id="pdf1" class="card-body p-5">
             <h4>Order Placed, Thank you!</h4>
             <h2>
-              {{itm.user.email}}
+              {{user.name}}
             </h2>
             <!-- <p class="fs-sm">
               This is the receipt for a payment of <strong>$312.00</strong> (USD) you made to Spacial Themes.
@@ -118,11 +118,11 @@ tbody, td, tfoot, th, thead, tr {
             <div class="border-top border-gray-200 pt-4 mt-4">
                 <div class="col-md-6">
                     <div class="text mb-2"><strong>Delivery address</strong></div>
-                    <div class="text-muted mb-2">{{itm.order.address.address1}}</div>
-                    <div class="text-muted mb-2">{{itm.order.address.city}}</div>
-                    <div class="text-muted mb-2">{{itm.order.address.country}}</div>
-                    <div class="text-muted mb-2">{{itm.order.address.postcode}}</div>
-                    <div class="text-muted mb-2">phone number: {{itm.order.address.phone}}</div>
+                    <div class="text-muted mb-2">{{order.address.address1}}</div>
+                    <div class="text-muted mb-2">{{order.address.city}}</div>
+                    <div class="text-muted mb-2">{{order.address.country}}</div>
+                    <div class="text-muted mb-2">{{order.address.postcode}}</div>
+                    <div class="text-muted mb-2">phone number: {{order.address.phone}}</div>
                     <strong>
                      
                     </strong>
@@ -141,10 +141,10 @@ tbody, td, tfoot, th, thead, tr {
                 
              
                 <div class="col-md-6 text-md-end">
-                  <div class="text-muted mb-2">Order at</div>
+                  <div class="text-muted mb-2"><strong>Order at:  </strong><span>{{order.order_at}}</span></div>
                   
                     <div class="text-muted mb-2"></div>
-                  <strong>{{itm.order.order_at}}</strong>
+                  <strong></strong>
                 </div>
                  
                 <table class="table border-bottom border-gray-200 mt-3">
@@ -157,12 +157,12 @@ tbody, td, tfoot, th, thead, tr {
                       </tr>
                     </thead>
                     <tbody>
-                      {%for i in order.items.all%}
+                      {% for itm in order_items %}
                       <tr>
-                        <td class="text-end px-0" style="text-align: center;">{{i.product.name}}</td>
-                        <td class="text-end px-0" style="text-align: center;">{{i.quantity}}</td>
-                        <td class="text-end px-0" style="text-align: center;">{{i.product.price}}</td>
-                        <td class="text-end px-0" style="text-align: center;">{{i.product_price}}</td>
+                        <td class="text-end px-0" style="text-align: center;">{{itm.product.name}}</td>
+                        <td class="text-end px-0" style="text-align: center;">{{itm.quantity}}</td>
+                        <td class="text-end px-0" style="text-align: center;">{{itm.product.price}}</td>
+                        <td class="text-end px-0" style="text-align: center;">{{itm.product_price}}</td>
                       </tr>
                       {%endfor%}
                     </tbody>
@@ -170,8 +170,16 @@ tbody, td, tfoot, th, thead, tr {
                 </div>
               </div>
               <div class="d-flex justify-content-end mt-3">
-                <h5 class="me-3">Total:</h5>
-                <h5 class="text-success" >{{itm.order.total_price}}</h5>
+                <h5 class="me-3">Total: </h5>
+                <h5 class="text-success" >{{order.total}}</h5>
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <h5 class="me-3">Discount applied: </h5>
+                <h5 class="text-success" >{{order.discount}}</h5>
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <h5 class="me-3">Grand Total</h5>
+                <h5 class="text-success" >{{order.total_price}}</h5>
               </div>
             </div>
 
@@ -189,7 +197,7 @@ tbody, td, tfoot, th, thead, tr {
             </div>
           </div>
          
-          {% endfor %}
+          
         </div>
     </div>
       </div>

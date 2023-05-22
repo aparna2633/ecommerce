@@ -79,15 +79,13 @@ body {
          
             {% for item in cart_items %}
             <tbody>
-                
-
                 <tr>
                    
                     <td>
                         <div class="product-item">
                             <a class="product-thumb" href="#"><img src="/media/{{item.product.image1}}" alt="Product"></a>
                             <div class="product-info">
-                                <h4 class="product-title"><a href="#">{{item.product.name}}</a></h4><span><em>Size:</em> 10.5</span><span><em>Color:</em> Dark Blue</span>
+                                <h4 class="product-title"><a href="#">{{item.product.name}}</a></h4><span></span>
                             </div>
                         </div>
                     </td>
@@ -108,10 +106,8 @@ body {
                     <td class="text-center"><a class="remove-from-cart" href="{% url 'remove_cart' item.id %}" data-toggle="tooltip" title="" data-original-title="Remove item"><i class="fa fa-trash"></i></a></td>
                 </div>
                 </div>
-</div>
+                </div>
                 </tr>
-                
-                
                  {% endfor %}
                  {% else %}
                  <div class="container padding-bottom-3x mb-1">
@@ -155,7 +151,11 @@ body {
         <div id="total_price" class="column text-lg">Total Price<span class="text-medium">{{total_price}}</span></div>
     </div>
     <div class="shopping-cart-footer">
+        <button id="reload-button" type="button" class="btn btn-primary">Update quantity</button>
+
         
+
+
         
         <div class="column"><a class="btn btn-success" {% if cart_items %} href="{% url 'checkout' %}" {% else %} disabled {% endif %}>Checkout</a></div>
 
@@ -207,6 +207,20 @@ body {
                     }
                  
             </script>
+
+<script>
+// Get the reload button element
+var reloadButton = document.getElementById('reload-button');
+
+// Add a click event listener to the reload button
+reloadButton.addEventListener('click', function() {
+    // Reload the page
+    location.reload();
+});
+
+</script>
+
+
 
 {%endblock%}
 

@@ -36,4 +36,5 @@ urlpatterns = [
     path("contact/",views.contact,name='contact'),
     path("blog/",views.blog,name='blog'),
     path("order_confirmation/",views.order_confirmation,name='order_confirmation'),
+    path("search/",views.search,name='search'),
 ]

@@ -224,22 +224,5 @@
                     });
             }
         </script> -->
-        <script>
-            document.querySelector('.search-area form').addEventListener('submit', function(event) {
-                event.preventDefault(); // Prevent form submission
         
-                var searchTerm = document.getElementById('headerSearch').value.toLowerCase();
-                var productGrid = document.getElementById('productGrid');
-                var products = productGrid.getElementsByClassName('single-product-wrapper');
-        
-                for (var i = 0; i < products.length; i++) {
-                    var productName = products[i].querySelector('h6').innerText.toLowerCase();
-                    if (productName.includes(searchTerm)) {
-                        products[i].style.display = 'block';
-                    } else {
-                        products[i].style.display = 'none';
-                    }
-                }
-            });
-        </script>
 {%endblock%}

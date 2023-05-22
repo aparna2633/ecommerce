@@ -27,3 +27,13 @@ class OtpForm(forms.Form):
     #             'password1', 
     #             'password2', 
     #             ]
+
+
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField()
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise forms.ValidationError("Email is required.")
+        return email

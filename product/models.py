@@ -100,7 +100,9 @@ class Order(models.Model):
     order_at = models.DateTimeField(auto_now_add=True)
     order_id = models.CharField(max_length=200, default=None) 
     address = models.ForeignKey(Address, related_name="shipping_address", on_delete=models.SET_NULL, blank=True, null=True)
-
+    discount= models.IntegerField(default=0)
+    shipping_charge=models.IntegerField(default=40)
+    total=models.IntegerField(default=0)
 
 
 class Orderitem(models.Model):

@@ -20,7 +20,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from store.views import loginacc
 from django.core.paginator import Paginator
 import os
-
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 def product_view_sorting(request):
     if not request.session.session_key:
         request.session.create()
@@ -62,6 +62,8 @@ def profile(request):
     if request.user.is_authenticated:
         fields = Address.objects.filter(user=request.user)
         return render(request, 'profile.html',{'fields':fields})
+    else:
+        return redirect(loginacc)
 
 def order_deatails(request):
     if request.user.is_authenticated:
@@ -102,12 +104,14 @@ def order_return(request, id):
         return redirect('order_deatails')
 
 #starting_wishlist
-@login_required
+
 def wishlist(request):
     if request.user.is_authenticated:
         wish_items = Wishlist.objects.filter(user=request.user)
         count_prod = Wishlist.objects.filter(user_id=request.user.id).count()
         count = CartItems.objects.filter(user_id=request.user.id).count()
+    else:
+        return redirect(loginacc)
     return render(request, 'wishlist.html',{'wish_items':wish_items,'count_prod':count_prod,'count':count})
 
 def add_to_wishlist(request, id):
@@ -202,6 +206,8 @@ def success(request):
             total_amount += item.total_price - item.discount
         print("total_price",total_amount)
         neworder.total_price = total_amount
+        neworder.discount= request.session.get('discount')
+        neworder.total=neworder.total_price+neworder.discount
         neworder.save()
 
 
@@ -238,6 +244,7 @@ def checkout(request):
                 discount+=itm.discount
 
             total=total_price+discount
+            request.session["discount"] = discount
             print('discount',discount)
             razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
             razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
@@ -310,9 +317,6 @@ def add_to_cart(request, id):
         count = guest_cart.count()
         messages.success(request,'Product added to cart')
         return redirect('product_view_sorting')
-
-
-
 
 def view_cart(request):
     print('tttttttttttttttt')
@@ -404,6 +408,7 @@ def place_order(request):
             neworder = Order()
             neworder.user = request.user
             neworder.address = Address.objects.get(pk=request.POST['address'])
+            neworder.discount= request.session.get('discount')
             address_pk = request.session.get('addressId')
             print(neworder.address)
             neworder.payment_method = request.POST.get('payment_method')
@@ -414,21 +419,25 @@ def place_order(request):
             neworder.order_id = ord1
             if not neworder.address:
                 return redirect('checkout')
+            total_amount =0
+            cartItems = CartItems.objects.filter(user=request.user)
+            print('got cart items')
+            for item in cartItems:
+                print('looping')
+                total_amount += item.total_price - item.discount
+            print("total_price",total_amount)
+            neworder.total_price = total_amount
+            neworder.discount= request.session.get('discount')
+            neworder.total=neworder.total_price+neworder.discount
 
-            print("dddddddddddddddddddd")
-            total_price = request.POST.get('total_price', Decimal(0))  
-            print("total_price",total_price)
-            neworder.total_price = total_price
             neworder.save()
-
-
             neworderitems = CartItems.objects.filter(user=request.user)
             for item in neworderitems:
                 Orderitem.objects.create(
                     order=neworder,
                     product=item.product,
                     product_price=item.unit_price * item.quantity,
-                    quantity=item.quantity
+                    quantity=item.quantity,
                 )
             CartItems.objects.filter(user=request.user).delete()
             return redirect(order_confirmation)
@@ -459,7 +468,7 @@ def proceed_to_pay(request):
     neworder.order_id = ord1
     if not neworder.address:
         return redirect('checkout')
-    print("dddddddddddddddddddd")
+    
     total_price = request.POST.get('total_price', Decimal(0))  
     print("total_price",total_price)
     neworder.total_price = total_price
@@ -531,5 +540,21 @@ def order_confirmation(request):
     if request.user.is_authenticated:
         order=Order.objects.filter(user=request.user).order_by('-order_at').first()
         order_items=Orderitem.objects.filter(order=order)
+
         now=datetime.now()
         return render(request,'order_confirmation.html',{'order':order,'order_items':order_items,'now':now})
+    
+
+
+def search(request):
+    search_query = request.GET.get('search')
+    if search_query:
+        search_vector = SearchVector('name',)
+        search_query = SearchQuery(search_query, config='english')
+        products = Product.objects.annotate(
+            search=search_vector, 
+            rank=SearchRank(search_vector, search_query)
+        ).filter(search=search_query).order_by('-rank')
+    else:
+        products = Product.objects.all() 
+    return render(request, 'products.html', {'products': products})

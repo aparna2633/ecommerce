@@ -141,56 +141,50 @@ def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            name=form.cleaned_data['name']
-            email=form.cleaned_data['email']
-            phone=form.cleaned_data['phone']
-            password=form.cleaned_data['password']
-            confirm_password=form.cleaned_data['confirm_password']
-            if password!=confirm_password:
-                raise ValidationError("passwords do not match!!")
-            try:
-                validate_email(email)
-            except ValidationError:
-                messages.error(request, "Please enter a valid email address!")
-                return redirect('signup')
-
-            try:
-                Account.objects.get(email=email)
-                messages.error(request, "User with this email already exists!")
-                return redirect('signup')
-            except ObjectDoesNotExist:
-                pass
-
-            # Check if phone number is valid
-            if not phone.isdigit() or len(phone) != 10:
-                messages.error(request, "Please enter a valid 10 digit phone number!")
-                return redirect('signup')
-
-            try:
-                Account.objects.get(phone=phone)
-                messages.error(request, "User with this phone number already exists!")
-                return redirect('signup')
-            except ObjectDoesNotExist:
-                pass
-
-            # Check if password is strong
-            if len(password) < 8 or not any(char.isdigit() for char in password) or not any(char.isalpha() for char in password):
-                messages.error(request, "Password should be at least 8 characters long and should contain at least one letter and one number!")
-                return redirect('signup')
-
-            user = Account.objects.create_user(name,email,phone,password)
-            user.name = name
-            user.email = email
-            user.phone = phone
-            user.save()
-
-            #login(request,user)
-            messages.success(request,"Registered Successfully!")
-            return redirect(loginacc)
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            phone = form.cleaned_data['phone']
+            password = form.cleaned_data['password']
+            confirm_password = form.cleaned_data['confirm_password']
             
+            if password != confirm_password:
+                messages.error(request, "Passwords do not match!")
+            else:
+                try:
+                    validate_email(email)
+                except ValidationError:
+                    messages.error(request, "Please enter a valid email address!")
+                else:
+                    try:
+                        Account.objects.get(email=email)
+                        messages.error(request, "User with this email already exists!")
+                    except ObjectDoesNotExist:
+                        pass
+
+                    if not phone.isdigit() or len(phone) != 10:
+                        messages.error(request, "Please enter a valid 10-digit phone number!")
+                    else:
+                        try:
+                            Account.objects.get(phone=phone)
+                            messages.error(request, "User with this phone number already exists!")
+                        except ObjectDoesNotExist:
+                            pass
+
+                        if len(password) < 8 or not any(char.isdigit() for char in password) or not any(char.isalpha() for char in password):
+                            messages.error(request, "Password should be at least 8 characters long and should contain at least one letter and one number!")
+                        else:
+                            user = Account.objects.create_user(name, email, phone, password)
+                            user.name = name
+                            user.email = email
+                            user.phone = phone
+                            user.save()
+
+                            messages.success(request, "Registered Successfully!")
+                            return redirect(loginacc)
     else:
-            form = SignUpForm()
-    return render(request,'signup.html',{'form':form})
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})
+
 
 
          
@@ -209,12 +203,13 @@ def forgot_password(request):
         if form.is_valid():
             email = form.cleaned_data['email']
             associated_users = User.objects.filter(email=email)
+            print("user",associated_users.exists())
             if associated_users.exists():
-                associated_users = User.objects.filter(email=email)
+                
                 for user in associated_users:
 
                     # Generate a password reset token
-                    token = default_token_generator.make_token(user)
+                    token = default_token_generator.make_tokens(user)
 
                     # Generate the password reset URL
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -238,3 +233,8 @@ def forgot_password(request):
     else:
         form = PasswordResetForm()
     return render(request, 'forgot_password.html', {'form': form})
+def contact(request):
+    return render(request,'contact.html')
+
+def blog(request):
+    return render(request,'blog.html')
