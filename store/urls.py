@@ -13,8 +13,7 @@ urlpatterns = [
     path('check_password/<str:uidb64>/<str:token>/', views.check_password, name='check_password'),
     path("contact/",views.contact,name='contact'),
     path("blog/",views.blog,name='blog'),
-    path('password-reset-confirm/<uidb64>/<token>/',
-         auth_views.PasswordResetConfirmView.as_view(template_name='password_reset_confirm.html'),
-         name='password_reset_confirm'),
+    path("reset_password/",views.reset_password,name='reset_password'),
+
 
 ]

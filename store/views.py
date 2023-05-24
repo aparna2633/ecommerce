@@ -25,7 +25,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.views.decorators.cache import cache_control
 from django.contrib import messages
-
+from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 
 
@@ -40,7 +40,7 @@ def index(request):
     return render(request, 'index.html',{'products':products,'banner':banner})
 
 
-        
+#user login
 @cache_control(no_cache=True, must_revalidate=True)
 def loginacc(request):
     if request.user.is_authenticated and not request.user.is_staff:
@@ -74,7 +74,7 @@ def loginacc(request):
                 guest_item = GuestCart.objects.filter(user_ref=sessionId)
                 guest_item.delete()
                 print("logged!!")
-                messages.success(request, 'Successfully logged in')
+               
                 return redirect(index)
             else:
                 messages.error(request, 'Email Id or Password is wrong!')
@@ -85,7 +85,6 @@ def loginacc(request):
 
 
 def otp(request):
-
     if request.method=='POST':
         phone = request.POST['phone']
         request.session["phone"] = phone
@@ -96,20 +95,17 @@ def otp(request):
             service_sid = os.getenv('SERVICE_SID') or 'VA5774a25100d8a4e5e1324832da6896aa'
             print(account_sid,auth_token)
             client = Client(account_sid, auth_token)
-
             verification = client.verify \
                      .v2 \
                      .services(service_sid) \
                      .verifications \
                      .create(to='[+91]'+str(phone), channel='sms')
-
             print(verification)
             if Account.objects.filter(phone=phone).exists():
                     return redirect(otp_verify)
         else:
             messages.error(request, "You are not a registered user!")
             return redirect(loginacc)
-
     return render(request,'otp_login.html')
 
 def otp_verify(request):
@@ -137,7 +133,6 @@ def otp_verify(request):
             messages.error(request, ("Wrong OTP"))
     return render(request, 'otp.html')
 
-
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -147,7 +142,6 @@ def signup(request):
             phone = form.cleaned_data['phone']
             password = form.cleaned_data['password']
             confirm_password = form.cleaned_data['confirm_password']
-            
             if password != confirm_password:
                 messages.error(request, "Passwords do not match!")
             else:
@@ -161,7 +155,6 @@ def signup(request):
                         messages.error(request, "User with this email already exists!")
                     except ObjectDoesNotExist:
                         pass
-
                     if not phone.isdigit() or len(phone) != 10:
                         messages.error(request, "Please enter a valid 10-digit phone number!")
                     else:
@@ -170,7 +163,6 @@ def signup(request):
                             messages.error(request, "User with this phone number already exists!")
                         except ObjectDoesNotExist:
                             pass
-
                         if len(password) < 8 or not any(char.isdigit() for char in password) or not any(char.isalpha() for char in password):
                             messages.error(request, "Password should be at least 8 characters long and should contain at least one letter and one number!")
                         else:
@@ -179,16 +171,11 @@ def signup(request):
                             user.email = email
                             user.phone = phone
                             user.save()
-
                             messages.success(request, "Registered Successfully!")
                             return redirect(loginacc)
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
-
-
-
-         
 
 def sign_out(request):
     if request.user.is_authenticated:
@@ -198,42 +185,34 @@ def sign_out(request):
         return redirect(index)
 
 def forgot_password(request):
-    if request.method == 'POST':
-        User = get_user_model()
-        form = PasswordResetForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            associated_users = User.objects.filter(email=email)
-            print("user",associated_users.exists())
-            if associated_users.exists():
-                
-                for user in associated_users:
-
-                    # Generate a password reset token
-                    token = default_token_generator.make_tokens(user)
-
-                    # Generate the password reset URL
-                    uid = urlsafe_base64_encode(force_bytes(user.pk))
-                    reset_url = reverse('check_password', kwargs={'uidb64': uid, 'token': token})
-                    reset_url = request.build_absolute_uri(reset_url)
-
-                    # Send the password reset email
-                    current_site = get_current_site(request)
-                    mail_subject = 'Reset your password'
-                    message = render_to_string('password_reset_email.html', {
-                        'user': user,
-                        'domain': current_site.domain,
-                        'reset_url': reset_url,
-                    })
-                    email = EmailMessage(mail_subject, message, to=[email])
-                    email.send()
-                    messages.success(request, 'Password reset email has been sent.')
-                return redirect(forgot_password)
+    if request.method == "POST":
+        email = request.POST.get('email')
+        request.session['email'] = email
+        users = Account.objects.filter(email=email)
+        for user in users:
+            if user.email == email:
+                return render(request, 'password_reset.html')
             else:
-                messages.error(request, 'There is no account associated with this email.')
-    else:
-        form = PasswordResetForm()
-    return render(request, 'forgot_password.html', {'form': form})
+                messages.error(request,'you are not registered')
+    return render(request, "forgot_password.html")
+
+def reset_password(request):
+    if request.method == "POST":
+        password = request.POST.get('password')
+        password1 = request.POST.get('password1')
+        email = request.session.get('email')
+        user = Account.objects.get(email=email)
+        print(user)
+        new_password = make_password(password)
+        print(new_password)
+        user.password = new_password
+        if password != password1:
+            messages.error(request, "Passwords do not match!")
+            return render(request,'password_reset.html')
+        user.save()
+    messages.success(request,'Password has been changed')
+    return redirect(loginacc)
+
 def contact(request):
     return render(request,'contact.html')
 

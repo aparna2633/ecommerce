@@ -21,6 +21,7 @@ from store.views import loginacc
 from django.core.paginator import Paginator
 import os
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+#listing products in one page
 def product_view_sorting(request):
     if not request.session.session_key:
         request.session.create()
@@ -65,12 +66,13 @@ def profile(request):
     else:
         return redirect(loginacc)
 
+#order details of user
 def order_deatails(request):
     if request.user.is_authenticated:
         order = Order.objects.filter(user=request.user)
         orderitm =Orderitem.objects.all()
         return render(request, 'order_list.html',{'order':order,'orderitm':orderitm})
-
+#cancel order
 def order_cancel(request, id):
     try:
         order = Order.objects.get(id=id)
@@ -86,7 +88,7 @@ def order_cancel(request, id):
     else:
         messages.error(request, "Order already canceled.")
         return redirect('order_deatails')
-    
+#return order
 def order_return(request, id):
     try:
         order = Order.objects.get(id=id)
@@ -139,7 +141,7 @@ def remove_item(request, id):
 def category_view(request):
     category = Category.objects.all()
     return render(request, 'products.html', category)
-
+#single product view
 def single_product(request,id):
     if not request.session.session_key:
             request.session.create()
@@ -148,17 +150,17 @@ def single_product(request,id):
     count = cart_items.count() 
     product = Product.objects.get(id=id)
     return render(request,'single-product-details.html',{'product':product})
-
+#remove product from cart
 def remove_cart(request, id):
     if request.user.is_authenticated:
         CartItems.objects.get(id=id).delete()
         count = CartItems.objects.filter(user_id=request.user.id).count()
         request.session['count'] = count
         return redirect(view_cart)
-    # else:
-    #     Guest_Cart.objects.get(id=id).delete()
-    #     return redirect(view_cart)
-
+    else:
+        GuestCart.objects.get(id=id).delete()
+        return redirect(view_cart)
+#razorpay payment
 @csrf_exempt
 def success(request):
     
@@ -186,18 +188,14 @@ def success(request):
             neworder.address = Address.objects.get(pk=address_pk)
             print(neworder.address,'hhhfdfhdkjfhalk')
         except ObjectDoesNotExist:
-
             return redirect('checkout', error='Address not found')
-
         neworder.payment_method = 'RAZORPAY'
-
         now = timezone.now()
         ord2 = str(datetime.now()) + str(request.user.id) + str(random.randint(0, 100))
         ord1 = ord2.translate({ord(':'): None, ord('-'): None, ord(' '): None, ord('.'): None}) 
         neworder.order_id = ord1
         if not neworder.address:
             return redirect(checkout)
-        
         total_amount =0
         cartItems = CartItems.objects.filter(user=request.user)
         print('got cart items')
@@ -209,8 +207,6 @@ def success(request):
         neworder.discount= request.session.get('discount')
         neworder.total=neworder.total_price+neworder.discount
         neworder.save()
-
-
         neworderitems = CartItems.objects.filter(user=request.user)
         for item in neworderitems:
             Orderitem.objects.create(
@@ -225,7 +221,7 @@ def success(request):
     except Exception as e:
         print("jjjjjjjjjjjjjjj",e)
         return render(request, 'checkout.html', context={'status': False})
-
+#showing checkout page
 @login_required(login_url=loginacc)
 def checkout(request):
         if request.user.is_authenticated:
@@ -252,7 +248,7 @@ def checkout(request):
             payment=client.order.create({'amount':int(total_price)*100,'currency':'INR','payment_capture':0})
             payment_id=payment['id']
             return render(request, 'checkout.html', {'cart_items': cart_items, 'count': count, 'total_price': total_price,'add':add,'payment_id':payment_id,'code':coupon,'discount':discount,'total':total})
-
+#coupon applying method
 def apply_coupon(request):
     if request.method == 'POST':
         print('apply coupon has been called')
@@ -265,7 +261,6 @@ def apply_coupon(request):
         request.session["coupon"] = couponDetail.coupon_code
         total_price=0
         for obj in cartDetails:
-            
             discountAmount = (obj.total_price * Decimal(couponDetail.discount)) / 100
             print(discountAmount)
             # obj.total_price -= discountAmount
@@ -276,17 +271,17 @@ def apply_coupon(request):
             print(total_price)
         return JsonResponse({'message': 'Coupon has been applied.', 'total_price': total_price})
 
-def update_cart(request):
-    if request.method=="POST":
-        prod_id=int(request.POST.get('product_id'))
-        if(CartItems.objectst.filter(user=request.user, product_id=prod_id)):
-            prod_qty=int(request.POST.get('product_stock'))
-            cart=CartItems.objects.get(product_id=prod_id,user=request.user)
-            cart.product_qty=prod_qty
-            cart.save()
-            return JsonResponse({"status":"Updated successfully"}) 
+# def update_cart(request):
+#     if request.method=="POST":
+#         prod_id=int(request.POST.get('product_id'))
+#         if(CartItems.objectst.filter(user=request.user, product_id=prod_id)):
+#             prod_qty=int(request.POST.get('product_stock'))
+#             cart=CartItems.objects.get(product_id=prod_id,user=request.user)
+#             cart.product_qty=prod_qty
+#             cart.save()
+#             return JsonResponse({"status":"Updated successfully"}) 
 
-
+#adding product to cart
 def add_to_cart(request, id):
     product = Product.objects.get(id=id)
     if request.user.is_authenticated:
@@ -317,7 +312,7 @@ def add_to_cart(request, id):
         count = guest_cart.count()
         messages.success(request,'Product added to cart')
         return redirect('product_view_sorting')
-
+#for seeing cart page
 def view_cart(request):
     print('tttttttttttttttt')
     if request.user.is_authenticated:
@@ -341,7 +336,7 @@ def view_cart(request):
         for item in guest_cart:
             total_price += item.total_price
         return render(request, 'cart.html', {'cart_items': guest_cart, 'count': count, 'total_price': total_price})
-
+#to update the quantity of product in cart
 @csrf_exempt
 def update_quantity(request):
     print("aaaaaaaa")
@@ -366,7 +361,7 @@ def update_quantity(request):
         item.save()
         total_price = GuestCart.objects.filter(user_ref = request.session['guest_key']).aggregate(Sum('total_price'))
         return JsonResponse({ 'new_total_price': total_price['total_price__sum']})
-
+#check the stock of product when updating cart
 def check_stock(request):
     if request.user.is_authenticated:
         item_id = request.GET.get('item_id')
@@ -374,7 +369,7 @@ def check_stock(request):
         stock_level = item.product.stock
         data = {'stock_level': stock_level}
         return JsonResponse(data)
-
+#to save the new address
 def save_details(request):
     if request.user.is_authenticated:
         if request.method=='POST':
@@ -390,7 +385,7 @@ def save_details(request):
             add.save()
         return redirect(checkout)
     return redirect(index)
-
+#place order with cash on delivery method
 @login_required
 def place_order(request):
     print("dxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
@@ -443,6 +438,7 @@ def place_order(request):
             return redirect(order_confirmation)
     return redirect(index)
 
+#to see the invoice
 def invoice(request,id):
     if request.user.is_authenticated:
         order = Order.objects.filter(user=request.user,id=id)
@@ -506,18 +502,20 @@ def set_address(request):
         request.session['addressId'] = addressId
         print("called set_address function",addressId)
     return checkout(request) 
-
+#for listing the all address added by user
 def address_list(request):
     if request.user.is_authenticated:
         address=Address.objects.filter(user=request.user)
     return render(request,'address.html',{'address':address})
 
+#deleting address added by user
 def delete_address(request,id):
     if request.user.is_authenticated:
         address=Address.objects.get(id=id)
         address.delete()
     return redirect(address_list)
 
+#for editing the user address
 def edit_address(request, address_id):
     address = get_object_or_404(Address, id=address_id)
     if request.method == 'POST':
@@ -530,12 +528,15 @@ def edit_address(request, address_id):
         return redirect('address_list')  # Replace 'address_list' with the appropriate URL name for the address list page
     return render(request, 'edit_address.html', {'address': address})
 
+#showing contact page
 def contact(request):
     return render(request,'contact.html')
 
+#showing blog page
 def blog(request):
     return render(request,'blog.html')
 
+#order confirmation page showing after placing order
 def order_confirmation(request):
     if request.user.is_authenticated:
         order=Order.objects.filter(user=request.user).order_by('-order_at').first()
@@ -543,9 +544,8 @@ def order_confirmation(request):
 
         now=datetime.now()
         return render(request,'order_confirmation.html',{'order':order,'order_items':order_items,'now':now})
-    
 
-
+#searching product in product page
 def search(request):
     search_query = request.GET.get('search')
     if search_query:
