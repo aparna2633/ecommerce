@@ -56,17 +56,3 @@ class Account(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
         return True
-
-
-
-
-# class UserAddress(models.Model):
-#     user = models.ForeignKey(Account, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=50)
-#     phone = models.CharField(max_length=10)
-#     email = models.EmailField(max_length=225)
-#     address1 = models.TextField(max_length=250)
-#     address2 = models.TextField(max_length=250)
-#     country = models.CharField(max_length=250)
-#     state = models.CharField(max_length=250)
-#     pin = models.IntegerField()

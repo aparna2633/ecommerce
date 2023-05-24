@@ -160,12 +160,24 @@
                                         </a>
                                         <p class="product-price">{{product.price}}</p>
                                         <a href="{%url 'add_to_wishlist' product.id %}">Add to wishlist</a>
-                        
+                                        <p>
+                                            {% if product.stock < 1 %}
+                                              out of stock
+                                            {% else %}
+                                              instock
+                                            {% endif %}
+                                          </p>
+                                          
                                         <!-- Hover Content -->
                                         <div class="hover-content">
                                             <!-- Add to Cart -->
                                             <div class="add-to-cart-btn">
-                                                <a href="{%url 'add_to_cart' product.id %}" class="btn essence-btn">Add to Cart</a>
+                                                {% if product.stock >= 1 %}
+                                                    <a href="{% url 'add_to_cart' product.id %}" class="btn essence-btn">Add to Cart</a>
+                                                {% else %}
+                                                    <p>Cannot add to cart - Out of stock</p>
+                                                {% endif %}
+
                                                 
                 
                                             </div>

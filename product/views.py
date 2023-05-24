@@ -21,6 +21,7 @@ from store.views import loginacc
 from django.core.paginator import Paginator
 import os
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.db import transaction
 #listing products in one page
 def product_view_sorting(request):
     if not request.session.session_key:
@@ -54,56 +55,31 @@ def product_view_sorting(request):
     }
     return render(request, 'products.html', context)
 
-
-def skincare(request):
-    products=Product.objects.filter(Category=skincare)
-    return render(request,{'products':products})
-
-def profile(request):
-    if request.user.is_authenticated:
-        fields = Address.objects.filter(user=request.user)
-        return render(request, 'profile.html',{'fields':fields})
+#searching product in product page
+def search(request):
+    search_query = request.GET.get('search')
+    if search_query:
+        search_vector = SearchVector('name',)
+        search_query = SearchQuery(search_query, config='english')
+        products = Product.objects.annotate(
+            search=search_vector, 
+            rank=SearchRank(search_vector, search_query)
+        ).filter(search=search_query).order_by('-rank')
     else:
-        return redirect(loginacc)
+        products = Product.objects.all() 
+    return render(request, 'products.html', {'products': products})
 
-#order details of user
-def order_deatails(request):
-    if request.user.is_authenticated:
-        order = Order.objects.filter(user=request.user)
-        orderitm =Orderitem.objects.all()
-        return render(request, 'order_list.html',{'order':order,'orderitm':orderitm})
-#cancel order
-def order_cancel(request, id):
-    try:
-        order = Order.objects.get(id=id)
-    except Order.DoesNotExist:
-        return HttpResponse("Invalid order id.")
-    
-    if order.status and order.delivery_status == 'Pending':
-        order.status = False
-        order.delivery_status = 'Cancelled'
-        messages.success(request, "Order canceled.")
-        order.save()
-        return redirect('order_deatails')
-    else:
-        messages.error(request, "Order already canceled.")
-        return redirect('order_deatails')
-#return order
-def order_return(request, id):
-    try:
-        order = Order.objects.get(id=id)
-    except Order.DoesNotExist:
-        return HttpResponse("Invalid order id.")
-    
-    if order.status and order.delivery_status == 'Delivered':
-        order.status = False
-        order.delivery_status = 'Returned'
-        messages.success(request, "Order Returned.")
-        order.save()
-        return redirect('order_deatails')
-    else:
-        messages.error(request, "Order already returned.")
-        return redirect('order_deatails')
+
+#single product view
+def single_product(request,id):
+    if not request.session.session_key:
+            request.session.create()
+    request.session['guest_key']=request.session.session_key
+    cart_items = GuestCart.objects.filter(user_ref = request.session['guest_key'])
+    count = cart_items.count() 
+    product = Product.objects.get(id=id)
+    return render(request,'single-product-details.html',{'product':product})
+
 
 #starting_wishlist
 
@@ -137,149 +113,6 @@ def remove_item(request, id):
         Wishlist.objects.get(id=id).delete()
         return redirect(wishlist)
 #ending_wishlist
-
-def category_view(request):
-    category = Category.objects.all()
-    return render(request, 'products.html', category)
-#single product view
-def single_product(request,id):
-    if not request.session.session_key:
-            request.session.create()
-    request.session['guest_key']=request.session.session_key
-    cart_items = GuestCart.objects.filter(user_ref = request.session['guest_key'])
-    count = cart_items.count() 
-    product = Product.objects.get(id=id)
-    return render(request,'single-product-details.html',{'product':product})
-#remove product from cart
-def remove_cart(request, id):
-    if request.user.is_authenticated:
-        CartItems.objects.get(id=id).delete()
-        count = CartItems.objects.filter(user_id=request.user.id).count()
-        request.session['count'] = count
-        return redirect(view_cart)
-    else:
-        GuestCart.objects.get(id=id).delete()
-        return redirect(view_cart)
-#razorpay payment
-@csrf_exempt
-def success(request):
-    
-    response = request.POST
-   
-    params_dict = {
-        'razorpay_payment_id': response['razorpay_payment_id'],
-        'razorpay_order_id': response['razorpay_order_id'],
-        'razorpay_signature': response['razorpay_signature']
-    }
-
-    razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
-    razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
-    
-    client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
-    try:
-        client.utility.verify_payment_signature(params_dict)
-        print("ffffffff",request.POST)
-        neworder = Order()
-        neworder.user = request.user
-        address_pk = request.session.get('addressId')
-        print(address_pk)
-        
-        try:
-            neworder.address = Address.objects.get(pk=address_pk)
-            print(neworder.address,'hhhfdfhdkjfhalk')
-        except ObjectDoesNotExist:
-            return redirect('checkout', error='Address not found')
-        neworder.payment_method = 'RAZORPAY'
-        now = timezone.now()
-        ord2 = str(datetime.now()) + str(request.user.id) + str(random.randint(0, 100))
-        ord1 = ord2.translate({ord(':'): None, ord('-'): None, ord(' '): None, ord('.'): None}) 
-        neworder.order_id = ord1
-        if not neworder.address:
-            return redirect(checkout)
-        total_amount =0
-        cartItems = CartItems.objects.filter(user=request.user)
-        print('got cart items')
-        for item in cartItems:
-            print('looping')
-            total_amount += item.total_price - item.discount
-        print("total_price",total_amount)
-        neworder.total_price = total_amount
-        neworder.discount= request.session.get('discount')
-        neworder.total=neworder.total_price+neworder.discount
-        neworder.save()
-        neworderitems = CartItems.objects.filter(user=request.user)
-        for item in neworderitems:
-            Orderitem.objects.create(
-                order=neworder,
-                product=item.product,
-                product_price=item.unit_price * item.quantity,
-                quantity=item.quantity
-            )
-
-        CartItems.objects.filter(user=request.user).delete()
-        return redirect(order_confirmation)
-    except Exception as e:
-        print("jjjjjjjjjjjjjjj",e)
-        return render(request, 'checkout.html', context={'status': False})
-#showing checkout page
-@login_required(login_url=loginacc)
-def checkout(request):
-        if request.user.is_authenticated:
-            print('got tot this api')
-            cart_items = CartItems.objects.filter(user=request.user)
-            add=Address.objects.filter(user=request.user)
-
-            
-            coupon=request.session.get('coupon') if request.session.get('coupon') else "Apply coupon"
-            count = cart_items.count()
-            total_price = 0
-            for item in cart_items:
-                total_price += item.total_price - item.discount
-            discount=0
-            for itm in cart_items:
-                discount+=itm.discount
-
-            total=total_price+discount
-            request.session["discount"] = discount
-            print('discount',discount)
-            razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
-            razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
-            client=razorpay.Client(auth=(razorpay_key_id,razorpay_key_secret))
-            payment=client.order.create({'amount':int(total_price)*100,'currency':'INR','payment_capture':0})
-            payment_id=payment['id']
-            return render(request, 'checkout.html', {'cart_items': cart_items, 'count': count, 'total_price': total_price,'add':add,'payment_id':payment_id,'code':coupon,'discount':discount,'total':total})
-#coupon applying method
-def apply_coupon(request):
-    if request.method == 'POST':
-        print('apply coupon has been called')
-        coupon = request.POST.get('coupon_code')
-        print(coupon)
-        couponDetail = Coupon.objects.get(coupon_code=coupon)
-        print(couponDetail)
-        cartDetails = CartItems.objects.filter(user=request.user)
-        print(couponDetail.coupon_code)
-        request.session["coupon"] = couponDetail.coupon_code
-        total_price=0
-        for obj in cartDetails:
-            discountAmount = (obj.total_price * Decimal(couponDetail.discount)) / 100
-            print(discountAmount)
-            # obj.total_price -= discountAmount
-            obj.coupon = couponDetail
-            obj.discount = discountAmount
-            obj.save()
-            total_price = obj.total_price - obj.discount
-            print(total_price)
-        return JsonResponse({'message': 'Coupon has been applied.', 'total_price': total_price})
-
-# def update_cart(request):
-#     if request.method=="POST":
-#         prod_id=int(request.POST.get('product_id'))
-#         if(CartItems.objectst.filter(user=request.user, product_id=prod_id)):
-#             prod_qty=int(request.POST.get('product_stock'))
-#             cart=CartItems.objects.get(product_id=prod_id,user=request.user)
-#             cart.product_qty=prod_qty
-#             cart.save()
-#             return JsonResponse({"status":"Updated successfully"}) 
 
 #adding product to cart
 def add_to_cart(request, id):
@@ -369,6 +202,79 @@ def check_stock(request):
         stock_level = item.product.stock
         data = {'stock_level': stock_level}
         return JsonResponse(data)
+
+#remove product from cart
+def remove_cart(request, id):
+    if request.user.is_authenticated:
+        CartItems.objects.get(id=id).delete()
+        count = CartItems.objects.filter(user_id=request.user.id).count()
+        request.session['count'] = count
+        return redirect(view_cart)
+    else:
+        GuestCart.objects.get(id=id).delete()
+        return redirect(view_cart)
+    
+#showing checkout page
+@login_required(login_url=loginacc)
+def checkout(request):
+        if request.user.is_authenticated:
+            print('got tot this api')
+            cart_items = CartItems.objects.filter(user=request.user)
+            add=Address.objects.filter(user=request.user)
+
+            
+            coupon=request.session.get('coupon') if request.session.get('coupon') else "Apply coupon"
+            count = cart_items.count()
+            total_price = 0
+            for item in cart_items:
+                total_price += item.total_price - item.discount
+            discount=0
+            for itm in cart_items:
+                discount+=itm.discount
+
+            total=total_price+discount
+            request.session["discount"] = discount
+            print('discount',discount)
+            razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
+            razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
+            client=razorpay.Client(auth=(razorpay_key_id,razorpay_key_secret))
+            payment=client.order.create({'amount':int(total_price)*100,'currency':'INR','payment_capture':0})
+            payment_id=payment['id']
+            return render(request, 'checkout.html', {'cart_items': cart_items, 'count': count, 'total_price': total_price,'add':add,'payment_id':payment_id,'code':coupon,'discount':discount,'total':total})
+#coupon applying method
+def apply_coupon(request):
+    if request.method == 'POST':
+        print('apply coupon has been called')
+        coupon = request.POST.get('coupon_code')
+        print(coupon)
+        couponDetail = Coupon.objects.get(coupon_code=coupon)
+        print(couponDetail)
+        cartDetails = CartItems.objects.filter(user=request.user)
+        print(couponDetail.coupon_code)
+        request.session["coupon"] = couponDetail.coupon_code
+        total_price=0
+        for obj in cartDetails:
+            discountAmount = (obj.total_price * Decimal(couponDetail.discount)) / 100
+            print(discountAmount)
+            # obj.total_price -= discountAmount
+            obj.coupon = couponDetail
+            obj.discount = discountAmount
+            obj.save()
+            total_price = obj.total_price - obj.discount
+            print(total_price)
+        return JsonResponse({'message': 'Coupon has been applied.', 'total_price': total_price})
+
+# def update_cart(request):
+#     if request.method=="POST":
+#         prod_id=int(request.POST.get('product_id'))
+#         if(CartItems.objectst.filter(user=request.user, product_id=prod_id)):
+#             prod_qty=int(request.POST.get('product_stock'))
+#             cart=CartItems.objects.get(product_id=prod_id,user=request.user)
+#             cart.product_qty=prod_qty
+#             cart.save()
+#             return JsonResponse({"status":"Updated successfully"}) 
+
+
 #to save the new address
 def save_details(request):
     if request.user.is_authenticated:
@@ -385,6 +291,78 @@ def save_details(request):
             add.save()
         return redirect(checkout)
     return redirect(index)
+    
+#razorpay payment
+@csrf_exempt
+def success(request):
+    
+    response = request.POST
+   
+    params_dict = {
+        'razorpay_payment_id': response['razorpay_payment_id'],
+        'razorpay_order_id': response['razorpay_order_id'],
+        'razorpay_signature': response['razorpay_signature']
+    }
+
+    razorpay_key_id = os.getenv('RAZORPAY_KEY_ID') or 'rzp_test_S0yLGz7vAs7dYf'
+    razorpay_key_secret = os.getenv('RAZORPAY_KEY_SECRET') or '03wmNfbrN6kxUtYDgE9XywDn'
+    
+    client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
+    try:
+        client.utility.verify_payment_signature(params_dict)
+        print("ffffffff",request.POST)
+        neworder = Order()
+        neworder.user = request.user
+        address_pk = request.session.get('addressId')
+        print(address_pk)
+        
+        try:
+            neworder.address = Address.objects.get(pk=address_pk)
+            print(neworder.address,'hhhfdfhdkjfhalk')
+        except ObjectDoesNotExist:
+            return redirect('checkout', error='Address not found')
+        neworder.payment_method = 'RAZORPAY'
+        now = timezone.now()
+        ord2 = str(datetime.now()) + str(request.user.id) + str(random.randint(0, 100))
+        ord1 = ord2.translate({ord(':'): None, ord('-'): None, ord(' '): None, ord('.'): None}) 
+        neworder.order_id = ord1
+        if not neworder.address:
+            return redirect(checkout)
+        total_amount =0
+        cartItems = CartItems.objects.filter(user=request.user)
+        print('got cart items')
+        for item in cartItems:
+            print('looping')
+            total_amount += item.total_price - item.discount
+        print("total_price",total_amount)
+        neworder.total_price = total_amount
+        neworder.discount= request.session.get('discount')
+        neworder.total=neworder.total_price+neworder.discount
+        neworder.save()
+        total_amount = 0
+        cartItems = CartItems.objects.filter(user=request.user)
+            
+        for item in cartItems:
+            total_amount += item.total_price - item.discount
+            # Update the stock of the product based on the quantity in the order
+            product = item.product
+            product.stock -= item.quantity
+            product.save()
+        neworderitems = CartItems.objects.filter(user=request.user)
+        for item in neworderitems:
+            Orderitem.objects.create(
+                order=neworder,
+                product=item.product,
+                product_price=item.unit_price * item.quantity,
+                quantity=item.quantity
+            )
+
+        CartItems.objects.filter(user=request.user).delete()
+        return redirect(order_confirmation)
+    except Exception as e:
+        print("jjjjjjjjjjjjjjj",e)
+        return render(request, 'checkout.html', context={'status': False})
+
 #place order with cash on delivery method
 @login_required
 def place_order(request):
@@ -426,16 +404,31 @@ def place_order(request):
             neworder.total=neworder.total_price+neworder.discount
 
             neworder.save()
+            
+            total_amount = 0
+            cartItems = CartItems.objects.filter(user=request.user)
+            
+            for item in cartItems:
+                total_amount += item.total_price - item.discount
+                # Update the stock of the product based on the quantity in the order
+                product = item.product
+                product.stock -= item.quantity
+                product.save()
+            
             neworderitems = CartItems.objects.filter(user=request.user)
+            
             for item in neworderitems:
                 Orderitem.objects.create(
                     order=neworder,
                     product=item.product,
                     product_price=item.unit_price * item.quantity,
-                    quantity=item.quantity,
+                    quantity=item.quantity
                 )
+            
             CartItems.objects.filter(user=request.user).delete()
+            
             return redirect(order_confirmation)
+    
     return redirect(index)
 
 #to see the invoice
@@ -545,16 +538,48 @@ def order_confirmation(request):
         now=datetime.now()
         return render(request,'order_confirmation.html',{'order':order,'order_items':order_items,'now':now})
 
-#searching product in product page
-def search(request):
-    search_query = request.GET.get('search')
-    if search_query:
-        search_vector = SearchVector('name',)
-        search_query = SearchQuery(search_query, config='english')
-        products = Product.objects.annotate(
-            search=search_vector, 
-            rank=SearchRank(search_vector, search_query)
-        ).filter(search=search_query).order_by('-rank')
+def profile(request):
+    if request.user.is_authenticated:
+        fields = Address.objects.filter(user=request.user)
+        return render(request, 'profile.html',{'fields':fields})
     else:
-        products = Product.objects.all() 
-    return render(request, 'products.html', {'products': products})
+        return redirect(loginacc)
+
+#order details of user
+def order_deatails(request):
+    if request.user.is_authenticated:
+        order = Order.objects.filter(user=request.user)
+        orderitm =Orderitem.objects.all()
+        return render(request, 'order_list.html',{'order':order,'orderitm':orderitm})
+#cancel order
+def order_cancel(request, id):
+    try:
+        order = Order.objects.get(id=id)
+    except Order.DoesNotExist:
+        return HttpResponse("Invalid order id.")
+    
+    if order.status and order.delivery_status == 'Pending':
+        order.status = False
+        order.delivery_status = 'Cancelled'
+        messages.success(request, "Order canceled.")
+        order.save()
+        return redirect('order_deatails')
+    else:
+        messages.error(request, "Order already canceled.")
+        return redirect('order_deatails')
+#return order
+def order_return(request, id):
+    try:
+        order = Order.objects.get(id=id)
+    except Order.DoesNotExist:
+        return HttpResponse("Invalid order id.")
+    
+    if order.status and order.delivery_status == 'Delivered':
+        order.status = False
+        order.delivery_status = 'Returned'
+        messages.success(request, "Order Returned.")
+        order.save()
+        return redirect('order_deatails')
+    else:
+        messages.error(request, "Order already returned.")
+        return redirect('order_deatails')
