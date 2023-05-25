@@ -251,11 +251,15 @@
         e.preventDefault();
         console.log("address adde",document.getElementById('addressId').value);
         console.log("address 1",document.getElementById('ad').value);
-
+        const address_field = $('#addressId').val()
+        if(address_field == ''){
+            const addressId = $('#ad').val()
+            console.log("jjj",addressId)
+            $('#addressId').val(addressId)
+        }
         const form = document.getElementById('form3');
         const formData = new FormData(form);
-        console.log(form)
-
+        console.log(form) 
         fetch("{% url 'set_address' %}", {
             method: 'post',
             body: formData

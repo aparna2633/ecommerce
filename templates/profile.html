@@ -31,7 +31,9 @@
   <div class="col-xl-9 col-lg-9 col-md-12 col-sm-12 col-12">
   <div class="card h-100">
     <div class="card-body">
-     
+      <form action="{% url 'save_profile' %}" method="post">
+        {% csrf_token %}
+        <div class="row">
       <div class="row gutters">
         
         <div class="col-xl-7 col-lg-12 col-md-12 col-sm-12 col-12">&nbsp;&nbsp;
@@ -40,46 +42,40 @@
         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">&nbsp;&nbsp;
           <div class="form-group">
             <label for="fullName">Full Name</label>&nbsp;&nbsp;
-            <input type="text" class="form-control" id="fullName" placeholder="Enter full name" value="{{user.name}}">&nbsp;&nbsp;
+            <input type="text" name="name" class="form-control" id="fullName" placeholder="Enter full name" value="{{user.name}}">&nbsp;&nbsp;
           </div>
         </div>
-        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">&nbsp;
-          <div class="form-group">
-            <label for="eMail">Email</label>&nbsp;&nbsp;
-            <input type="email" class="form-control" id="eMail" placeholder="Enter email ID" value="{{user.email}}">&nbsp;&nbsp;
-          </div>
-        </div>
-        
         
       </div>
       <div class="row gutters">
         
         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
           <div class="form-group">
-            <label for="Street">Password</label>
-            <input type="name" class="form-control" id="Street" placeholder="......" value="">
+            <label for="Street">Email</label>
+            <input type="name" name="password" class="form-control" id="Street" value="{{user.email}}">
           </div>
         </div>
         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
           <div class="form-group">
-            <label for="ciTy">Password</label>
-            <input type="name" class="form-control" id="ciTy" placeholder="......" value="">
+            <label for="ciTy">Phone</label>
+            <input type="name" name="password2" class="form-control" id="ciTy" value="{{user.phone}}">
           </div>
         </div>
       </div>
       <div class="row gutters">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
           <div class="text-right">
-            <button type="button" id="submit" name="submit" class="btn btn-secondary">Cancel</button>
-            <button type="button" id="submit" name="submit" class="btn btn-primary">Update</button>
           </div>
         </div>
       </div>
     </div>
+   
+  </div>
+    </form>
   </div>
   </div>
   </div>
   </div>
 </div>
 <footer>end</footer>
-{%endblock%} 
+{%endblock%}

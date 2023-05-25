@@ -37,4 +37,5 @@ urlpatterns = [
     path("search/",views.search,name='search'),
     path("single_product/<int:id>",views.single_product,name='single_product'),
     path("remove_item/<int:id>",views.remove_item,name='remove_item'),
+  
 ]

@@ -65,7 +65,6 @@
                                         <img src="/media/{{i.product.image1}}" alt="product_image1">
                                         <!-- Hover Thumb -->
                                         <a href="{% url 'product_detail' i.product.id %}"><img class="hover-img" src="/media/{{i.product.image2}}" alt="product_image2"></a>
-                
                                         <!-- Product Badge -->
                                         {%if product.offer %}
                                         <div class="product-badge offer-badge">
@@ -73,9 +72,7 @@
                                         </div>
                                         {% endif %}
                                         <!-- Favourite -->
-                                        
                                     </div>
-                        
                                     <!-- Product Description -->
                                     <div class="product-description">
                                         <span>{{i.product.brand}}</span>

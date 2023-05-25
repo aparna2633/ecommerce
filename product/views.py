@@ -22,6 +22,7 @@ from django.core.paginator import Paginator
 import os
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db import transaction
+from django.contrib.auth.hashers import make_password
 #listing products in one page
 def product_view_sorting(request):
     if not request.session.session_key:
@@ -620,3 +621,19 @@ def order_return(request, id):
     else:
         messages.error(request, "Order already returned.")
         return redirect('order_deatails')
+    
+# def save_profile(request):
+#     if request.user.is_authenticated:
+#         if request.method=='POST':
+#             name=request.POST['name']
+#             password=request.POST['password']
+#             password2=request.POST['password']
+#             user = Account.objects.get(user=user)
+#             new_password=make_password(password)
+#             user.pssword=new_password
+#             if password!=password2:
+#                 messages.error(request,"Passwords do not match!")
+#                 return redirect(profile)
+#             user.save()
+#         messages.success(request,'Password has been changed')
+#         return redirect(profile)
