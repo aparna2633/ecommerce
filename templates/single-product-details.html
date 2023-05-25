@@ -2,6 +2,17 @@
 {%load static%}
 {% block content %}
 <div class="container mt-5 mb-5">
+   <!-- sweet alert cdn -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- sweet alert cdn end -->
+    <ul class="messages">
+        {% for message in messages %}
+        <script>
+          Swal.fire('{{message}}')
+      </script>
+        {% endfor %}
+      </ul>
+    
     <div class="row d-flex justify-content-center">
         <div class="col-md-10">
             <div class="card">
@@ -26,8 +37,16 @@
                                 </div>
                             </div>
                             
+                            {% if product.stock >= 1 %}
+                            <div class="cart mt-4 align-items-center"> 
+                                <button class="btn btn-danger text-uppercase mr-2 px-4"><a data-product-id="{{ product.id }}" href="#" class="add-to-cart">Add to Cart</a></button> 
+                                <!-- <i class="fa fa-heart text-muted"></i>   -->
+                            </div>
+                                                    
+                                                {% else %}
+                                                    <p>Cannot add to cart - Out of stock</p>
+                                                {% endif %}
                             
-                            <div class="cart mt-4 align-items-center"> <button class="btn btn-danger text-uppercase mr-2 px-4">Add to cart</button> <i class="fa fa-heart text-muted"></i>  </div>
                         </div>
                     </div>
                 </div>
@@ -42,4 +61,61 @@
         mainImage.src = newImageSource;
     }
     </script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- Include SweetAlert2 CDN -->
+
+<script>
+    $(document).ready(function() {
+        // Handle click event on "Add to cart" button
+        $('a.add-to-cart').on('click', function(event) {
+            event.preventDefault();
+
+            // Get product ID from data attribute
+            var productId = $(this).data('product-id');
+
+            // Get CSRF token
+            var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+
+            // Add CSRF token to Ajax request data
+            var data = {'id': productId, 'csrfmiddlewaretoken': csrfToken};
+
+            // Send Ajax request
+            $.ajax({
+                url: "{% url 'add_to_cart' 0 %}".replace('0', productId),
+                type: "POST",
+                data: data,
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        // Display success message with SweetAlert
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+
+                        // Update cart count
+                        $('#essenceCartBtn span').text(response.count);
+                    }
+                },
+
+                error: function(xhr, status, error) {
+                    // Display error message with SweetAlert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            });
+        });
+    });
+</script>
+
 {%endblock%}

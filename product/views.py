@@ -38,7 +38,7 @@ def product_view_sorting(request):
         products = Product.objects.all()
 
     # Pagination
-    paginator = Paginator(products,3)  # Show 9 products per page
+    paginator = Paginator(products,4)  # Show 9 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -98,12 +98,11 @@ def add_to_wishlist(request, id):
         wish_item = Wishlist.objects.filter(product=product, user=request.user)
         
         if wish_item.exists():
-            messages.warning(request, "Product already exists in your wishlist.")
+            return JsonResponse({'message': 'Product already exists in your wishlist.', 'success': True})
+            
         else:
             wish_item = Wishlist.objects.create(product=product, user=request.user)
-            messages.success(request, "Product added to your wishlist.")
-        
-        return redirect('product_view_sorting')
+            return JsonResponse({'message': 'Product added to your wishlist.', 'success': True})
     else:
         messages.error(request, "Please login.")
         return render(request, 'index.html')
@@ -117,8 +116,8 @@ def remove_item(request, id):
 #adding product to cart
 def add_to_cart(request, id):
     product = Product.objects.get(id=id)
+    
     if request.user.is_authenticated:
-        
         cart_item = CartItems.objects.filter(product=product, user=request.user)
         if cart_item.exists():
             cart_item = cart_item.first()
@@ -127,24 +126,26 @@ def add_to_cart(request, id):
             cart_item.save()
         else:
             cart_item = CartItems.objects.create(product=product, user=request.user, quantity=1, unit_price=product.price, total_price=product.price)
-        messages.success(request,'Product added to cart')
-        return redirect('product_view_sorting')
+        
+        return JsonResponse({'message': 'Product added to cart.', 'success': True})
     else:
         if not request.session.session_key:
             request.session.create()
-        request.session['guest_key']=request.session.session_key
-        guest_cart = GuestCart.objects.filter(product=product,user_ref = request.session['guest_key'])
+        request.session['guest_key'] = request.session.session_key
+        guest_cart = GuestCart.objects.filter(product=product, user_ref=request.session['guest_key'])
         if guest_cart.exists():
             guest_cart = guest_cart.first()
             guest_cart.quantity += 1
             guest_cart.total_price = guest_cart.quantity * guest_cart.unit_price
             guest_cart.save()
         else:
-            guest_cart = GuestCart.objects.create(product=product,user_ref = request.session['guest_key'],quantity = 1,unit_price=product.price,total_price=product.price)
-        guest_cart = GuestCart.objects.filter(user_ref = request.session['guest_key'])
+            guest_cart = GuestCart.objects.create(product=product, user_ref=request.session['guest_key'], quantity=1, unit_price=product.price, total_price=product.price)
+        
+        guest_cart = GuestCart.objects.filter(user_ref=request.session['guest_key'])
         count = guest_cart.count()
-        messages.success(request,'Product added to cart')
-        return redirect('product_view_sorting')
+        
+        return JsonResponse({'message': 'Product added to cart.', 'success': True})
+
 #for seeing cart page
 def view_cart(request):
     print('tttttttttttttttt')
@@ -264,33 +265,49 @@ def apply_coupon(request):
             print(total_price)
         return JsonResponse({'message': 'Coupon has been applied.', 'total_price': total_price})
 
-# def update_cart(request):
-#     if request.method=="POST":
-#         prod_id=int(request.POST.get('product_id'))
-#         if(CartItems.objectst.filter(user=request.user, product_id=prod_id)):
-#             prod_qty=int(request.POST.get('product_stock'))
-#             cart=CartItems.objects.get(product_id=prod_id,user=request.user)
-#             cart.product_qty=prod_qty
-#             cart.save()
-#             return JsonResponse({"status":"Updated successfully"}) 
+
 
 
 #to save the new address
 def save_details(request):
     if request.user.is_authenticated:
-        if request.method=='POST':
-            address1=request.POST['address1']
-            city=request.POST['city']
-            postcode=request.POST['postcode']
-            phone=request.POST['phone']
-            country=request.POST['country']
-            # if Address.objects.filter(user=request.user).count() >= 5:
-            #     address = Address.objects.filter(user=request.user)
-            #     return render(request, 'checkout.html', {'address_limit_exceeded': True,'address': address})
-            add=Address(user=request.user,address1=address1,city=city,postcode=postcode,phone=phone,country=country)
+        if request.method == 'POST':
+            # Retrieve user's existing addresses
+            existing_addresses_count = Address.objects.filter(user=request.user).count()
+
+            # Check if the maximum address limit (5) is exceeded
+            if existing_addresses_count >= 5:
+                messages.error(request, 'Cannot add a new address. The maximum limit has been reached.')
+                return redirect(checkout)  # Replace 'your_redirect_url' with the appropriate URL
+
+            address1 = request.POST['address1']
+            city = request.POST['city']
+            postcode = request.POST['postcode']
+            phone = request.POST['phone']
+            country = request.POST['country']
+
+            # Validate postcode
+            if len(postcode) != 6 or not postcode.isdigit():
+                messages.error(request, 'Please enter a valid 6-digit postcode.')
+                return redirect(checkout)  # Replace checkout with the appropriate URL
+
+            # Validate city and country
+            if not city.isalpha():
+                messages.error(request, 'Please enter a valid city name without numbers or symbols.')
+                return redirect(checkout)  # Replace 'your_redirect_url' with the appropriate URL
+
+            if not country.isalpha():
+                messages.error(request, 'Please enter a valid country name without numbers or symbols.')
+                return redirect(checkout)  # Replace 'your_redirect_url' with the appropriate URL
+
+            # Save the address if validation is successful
+            add = Address(user=request.user, address1=address1, city=city, postcode=postcode, phone=phone, country=country)
             add.save()
-        return redirect(checkout)
-    return redirect(index)
+
+            return redirect('checkout')  # Replace 'checkout' with the appropriate URL
+
+    return redirect('checkout')
+
     
 #razorpay payment
 @csrf_exempt
@@ -376,8 +393,27 @@ def place_order(request):
             phone=request.POST['phone']
             country=request.POST['country']
             add=Address(user=request.user,address1=address1,city=city,postcode=postcode,phone=phone,country=country)
+            if len(postcode) != 6 or not postcode.isdigit():
+                messages.error(request, 'Please enter a valid 6-digit postcode.')
+                return redirect(checkout)  # Replace checkout with the appropriate URL
+
+            # Validate city and country
+            if not city.isalpha():
+                messages.error(request, 'Please enter a valid city name without numbers or symbols.')
+                return redirect(checkout)  # Replace 'your_redirect_url' with the appropriate URL
+
+            if not country.isalpha():
+                messages.error(request, 'Please enter a valid country name without numbers or symbols.')
+                return redirect(checkout)  # Replace 'your_redirect_url' with the appropriate URL
+
+            # Save the address if validation is successful
+            add = Address(user=request.user, address1=address1, city=city, postcode=postcode, phone=phone, country=country)
             add.save()
+            return redirect(checkout)
         else:
+            if 'address' not in request.POST:
+                messages.error(request, 'Please select an address.')
+                return redirect(checkout)
             neworder = Order()
             neworder.user = request.user
             neworder.address = Address.objects.get(pk=request.POST['address'])
@@ -429,7 +465,7 @@ def place_order(request):
             
             return redirect(order_confirmation)
     
-    return redirect(index)
+    return redirect(checkout)
 
 #to see the invoice
 def invoice(request,id):
@@ -492,6 +528,7 @@ def product_list_by_category(request, category_name):
 def set_address(request):
     if request.method == 'POST':
         addressId =request.POST.get('addressId')
+        print(addressId)
         request.session['addressId'] = addressId
         print("called set_address function",addressId)
     return checkout(request) 

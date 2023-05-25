@@ -56,7 +56,6 @@
                       <h6 class="card-title">{{item.country}}</h6>
                       <h6 class="card-title">{{item.postcode}}</h6>
                       <h6 class="card-title">{{item.phone}}</h6>
-
                       <p class="card-text">select address</p>
                       <div class="form-check">
                         <input id="ad" required class="form-check-input" onclick="fun1('{{item.id}}')" type="radio"  value="{{item.id}}" name="address" checked>
@@ -70,7 +69,11 @@
                     {% endfor %}
                   </div>
                     <div class="checkout_details_area mt-50 clearfix">
-
+<div>
+    {% for message in messages %}
+    <p class="text-danger">{{message}}</p>
+    {% endfor %}
+</div>
                         <div class="cart-page-heading mb-30">
                             <h5>Billing Address</h5>
                         </div>
@@ -80,21 +83,21 @@
                             <div class="row">
                                 <div class="col-12 mb-3">
                                     <label for="street_address">Address<span>*</span></label>
-                                    <input type="text" class="form-control mb-3"  value="" name="address1">
+                                    <input type="text" class="form-control mb-3"  value="" name="address1" required>
                                    
                                 </div>  
                                 <div class="col-12 mb-3">
                                     <label for="city">City <span>*</span></label>
-                                    <input type="text" class="form-control" id="city" value="" name="city">
+                                    <input type="text" class="form-control" id="city" value="" name="city" required>
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label for="postcode">Country<span>*</span></label>
-                                    <input type="text" class="form-control" id="country" value="" name="country">
+                                    <input type="text" class="form-control" id="country" value="" name="country" required>
                                 </div>                             
                                 
                                 <div class="col-12 mb-3">
                                     <label for="postcode">Postcode <span>*</span></label>
-                                    <input type="text" class="form-control" id="postcode" value="" name="postcode">
+                                    <input type="number" class="form-control" id="postcode" value="" name="postcode" required>
                                 </div> 
 
                                 <div class="col-12 mb-3">
@@ -208,53 +211,67 @@
 
 
 <!-- razorpay -->
+
+
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-fun1 = function(id){
-        console.log('hai',id)
-        document.getElementById('addressId').value = id
-        
+    fun1 = function(id) {
+        console.log('hai', id);
+        document.getElementById('addressId').value = id;
+
+        // Update the address ID in the options object
+        options.notes.address = id;
     }
-var options = {
-    "key": "rzp_test_S0yLGz7vAs7dYf", // Enter the Key ID generated from the Dashboard
-    "amount": "50000", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
-    "currency": "INR",
-    "name": "Acme Corp",
-    "description": "Test Transaction",
-    "image": "https://example.com/your_logo",
-    "order_id": "{{payment_id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-    "callback_url": "{% url 'success' %}", //placing order by razorpay method
-    "prefill": {
-        "name": "Gaurav Kumar",
-        "email": "gaurav.kumar@example.com",
-        "contact": "9000090000"
-    },
-    "notes": {
-        "address": "Razorpay Corporate Office"
-    },
-    "theme": {
-        "color": "#3399cc"
-    }
-};
-// set address 
-var rzp1 = new Razorpay(options);
-document.getElementById('rzp-button1').onclick = function(e){
-    const form = document.getElementById('form3')
-    const formData = new FormData(form)
-    
-    fetch("{% url 'set_address' %}", {
-        method: 'post',
-        body:formData
-    }).then(res =>{
-        
+
+    var options = {
+        "key": "rzp_test_S0yLGz7vAs7dYf", // Enter the Key ID generated from the Dashboard
+        "amount": "50000", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+        "currency": "INR",
+        "name": "Acme Corp",
+        "description": "Test Transaction",
+        "image": "https://example.com/your_logo",
+        "order_id": "{{payment_id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+        "callback_url": "{% url 'success' %}", //placing order by razorpay method
+        "prefill": {
+            "name": "Gaurav Kumar",
+            "email": "gaurav.kumar@example.com",
+            "contact": "9000090000"
+        },
+        "notes": {
+            "address": ""
+        },
+        "theme": {
+            "color": "#3399cc"
+        }
+    };
+
+    // set address 
+    var rzp1 = new Razorpay(options);
+    document.getElementById('rzp-button1').onclick = function(e) {
         e.preventDefault();
-        rzp1.open();
-    }).catch(err =>{
-        //handle error
-    })
-    
-}
+        console.log("address adde",document.getElementById('addressId').value);
+        console.log("address 1",document.getElementById('ad').value);
+
+        const form = document.getElementById('form3');
+        const formData = new FormData(form);
+        console.log(form)
+
+        fetch("{% url 'set_address' %}", {
+            method: 'post',
+            body: formData
+        }).then(function(res) {
+            console.log('Address set successfully');
+            // Automatically trigger click event on "Add to cart" button
+            $('.add-to-cart').trigger('click');
+
+            // Open Razorpay checkout with updated options
+            rzp1.open();
+        }).catch(function(err) {
+            console.log('Error setting address:', err);
+        });
+    };
 </script>
+
 
 
 

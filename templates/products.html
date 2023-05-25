@@ -21,27 +21,21 @@
 }
 
 </style>
+<!-- sweet alert cdn -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src='{% static "js/jquery.toast.js" %}'></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<!-- sweet alert cdn end -->
     </header>
     <br><br>
+
     <div class="breadcumb_area bg-img" style="background-image: url({% static 'img/bg-img/breadcumb.jpg' %});">
+        <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
         <div class="container h-100">
             <div class="row h-100 align-items-center">
                 <div class="col-12">
                     <div class="page-title text-center">
                             <h2>SHOP</h2>
-                        {% if messages %}
-                        <ul class="messages">
-                          {% for message in messages %}
-                          <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <strong>{{message}}</strong>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          {% endfor %}
-                        </ul>
-                      {% endif %}
-                        
                     </div>
                     <div class="col-md-3">
                         
@@ -56,55 +50,9 @@
     <section class="shop_grid_area section-padding-80">
         <div class="container">
             <div class="row">
-                <div class="col-12 col-md-4 col-lg-3">
-                    <div class="shop_sidebar_area">
-                        
+                
 
-                        <!-- ##### Single Widget ##### -->
-                        <div class="widget catagory mb-50">
-                            <!-- Widget Title -->
-                            <h6 class="widget-title mb-30"></h6>
-
-                            <!--  Catagories  -->
-                            <!-- <div class="widget brands mb-50"> -->
-                                <!-- Widget Title 2 -->
-                                <!-- <p class="widget-title2 mb-30">Categories</p>
-                                <div class="widget-desc">
-                                    
-                                </div>
-                            </div>
-                        </div> -->
-
-                        <!-- ##### Single Widget ##### -->
-                        
-
-                        <!-- ##### Single Widget ##### -->
-                        
-
-                        <!-- ##### Single Widget ##### -->
-                        <div class="widget brands mb-50">
-                            <!-- Widget Title 2 -->
-                            <!-- <p class="widget-title2 mb-30"></p>
-                            <div class="widget-desc">
-                                {% for cate in category %}
-                                <li class=""><a class="">{{cate.name}}<b class="caret"></b></a>
-                                    
-                                     
-                                </li>
-                                {%endfor%} -->
-                                <!-- <ul>
-                                    
-                                    {% for cate in sub %}
-                                    <li><a href="">{{cate.name}}</a></li>
-                                    {% endfor %}
-                                </ul> -->
-                            </div>
-                        </div>
-                        
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-8 col-lg-9">
+                <div class="col-12">
                     <div class="shop_grid_product_area">
                         <div class="row">
                             <div class="col-12">
@@ -133,7 +81,7 @@
                         <div class="row" id="productGrid">
                             {% for product in products %}
                             <!-- Single Product -->
-                            <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="col-12 col-sm-6 col-lg-3">
                                 <div class="single-product-wrapper">
                                     <!-- Product Image -->
                                     <div class="product-img">
@@ -155,33 +103,23 @@
                                     <!-- Product Description -->
                                     <div class="product-description">
                                         <span>{{product.brand}}</span>
-                                        <a href="single-product-details.html">
+                                        <a href="{%url 'single_product' product.id %}">
                                             <h6>{{product.name}}</h6>
                                         </a>
                                         <p class="product-price">{{product.price}}</p>
-                                        <a href="{%url 'add_to_wishlist' product.id %}">Add to wishlist</a>
-                                        <p>
-                                            {% if product.stock < 1 %}
-                                              out of stock
-                                            {% else %}
-                                              instock
-                                            {% endif %}
-                                          </p>
-                                          
-                                        <!-- Hover Content -->
+                                        <a class="add-to-wishlist" data-product-id="{{product.id}}" href="#">Add to wishlist</a>                                        <!-- Hover Content -->
                                         <div class="hover-content">
                                             <!-- Add to Cart -->
+                                            {%if product.stock <= 0 %}
                                             <div class="add-to-cart-btn">
-                                                {% if product.stock >= 1 %}
-                                                    <a href="{% url 'add_to_cart' product.id %}" class="btn essence-btn">Add to Cart</a>
-                                                {% else %}
-                                                    <p>Cannot add to cart - Out of stock</p>
-                                                {% endif %}
-
-                                                
-                
+                                                <a href="#" class="btn essence-btn">Out of Stock</a>
                                             </div>
+                                            {%else%}
                                             
+                                                <a href="#" class="add-to-cart btn essence-btn" data-product-id="{{ product.id }}">Add to Cart</a>
+                                                
+                                            
+                                            {%endif%}
                                         </div>
                                     </div>
                                 </div>
@@ -219,7 +157,136 @@
                 </div>
             </div>
         </section>
+        <!-- Add the SweetAlert CSS file -->
 
+
+<!-- Add the jQuery library -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Add the SweetAlert JS file -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- Include SweetAlert2 CDN -->
+
+<script>
+    $(document).ready(function() {
+        // Handle click event on "Add to cart" button
+        $('a.add-to-cart').on('click', function(event) {
+            event.preventDefault();
+
+            // Get product ID from data attribute
+            var productId = $(this).data('product-id');
+
+            // Get CSRF token
+            var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+
+            // Add CSRF token to Ajax request data
+            var data = {'id': productId, 'csrfmiddlewaretoken': csrfToken};
+
+            // Send Ajax request
+            $.ajax({
+                url: "{% url 'add_to_cart' 0 %}".replace('0', productId),
+                type: "POST",
+                data: data,
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        // Display success message with SweetAlert
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+
+                        // Update cart count
+                        $('#essenceCartBtn span').text(response.count);
+                    }
+                },
+
+                error: function(xhr, status, error) {
+                    // Display error message with SweetAlert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            });
+        });
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function() {
+        // Handle click event on "Add to wishlist" button
+        $('a.add-to-wishlist').on('click', function(event) {
+            event.preventDefault();
+
+            // Get product ID from data attribute
+            var productId = $(this).data('product-id');
+
+            // Get CSRF token
+            var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+
+            // Add CSRF token to Ajax request data
+            var data = {'id': productId, 'csrfmiddlewaretoken': csrfToken};
+
+            // Send Ajax request
+            $.ajax({
+                url: "{% url 'add_to_wishlist' 0 %}".replace('0', productId),
+                type: "POST",
+                data: data,
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        // Display success message with SweetAlert
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    } else {
+                        // Display info message with SweetAlert
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Info',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Display error message with SweetAlert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+<!-- Your existing code here -->
+
+
+          
         
         <!-- ##### Shop Grid Area End ##### -->
         
