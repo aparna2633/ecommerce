@@ -328,6 +328,15 @@ $(document).ready(function () {
       }
     }
   </script>
-
+<script>
+    window.history.forward();
+    function preventBack() {
+      window.history.forward();
+    }
+    setTimeout("preventBack()", 10);
+    window.onunload = function() {
+      window.replace('/');
+    };
+  </script>
 
 {%endblock%}
