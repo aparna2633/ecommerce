@@ -142,7 +142,11 @@ def signup(request):
             phone = form.cleaned_data['phone']
             password = form.cleaned_data['password']
             confirm_password = form.cleaned_data['confirm_password']
-            if password != confirm_password:
+            if not name.isalpha():
+                messages.error(request, "Name should contain only characters!")
+            elif len(name) < 2:
+                messages.error(request, "Name should be at least 2 characters long!")
+            elif password != confirm_password:
                 messages.error(request, "Passwords do not match!")
             else:
                 try:
